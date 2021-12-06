@@ -310,6 +310,32 @@ sCgivenE = shannon_CE (c_and_e) #Conditional entropy H(C|E)
 #Mutual information: 
 mI = sE - sCgivenE 
 
+#Divergences: 
+
+rho_i = log(rho_i)
+rho_noi = log(rho_noi)
+
+#Probability distribution of growth rates with info
+b_use_i = seq(min(c(rho_noi,rho_i),na.rm=T),max(c(rho_noi,rho_i),na.rm=T), length.out=breaks)
+rho_dist_i = hist(rho_i,breaks=b_use_i,plot = FALSE)
+rho_i_p = rho_dist_i$counts/sum(rho_dist_i$counts)
+rho_i_b = rho_dist_i$mids
+
+#Average log growth rate:
+rho_i_d = sum(rho_i_p*rho_i_b )
+
+#Probability distribution of growth rates without info
+#b_use_noi = seq(min(rho_noi,na.rm=T),max(rho_noi,na.rm=T), length.out=breaks)
+rho_dist_noi = hist(rho_noi,breaks=b_use_i,plot = FALSE)
+rho_noi_p = rho_dist_noi$counts/sum(rho_dist_noi$counts)
+rho_noi_b = rho_dist_noi$mids
+
+#Average log growth rate:
+rho_noi_d = sum(rho_noi_p*rho_noi_b )
+
+#Get KL from philentropy:
+kl1 = philentropy::KL(rbind(rho_noi_p, rho_i_p), unit = "log") 
+
 ####Save stuff for figures
 save(file ="dm_simp.var",Ni, No, N_noi, rho_noi, rho_o, rho_i, gs_o, gj, gce, gec, 
 		 sE, sCgivenE, mI, mI_sim,env_act,env_sensed)

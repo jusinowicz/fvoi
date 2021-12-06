@@ -61,6 +61,21 @@ shannon_CE = function ( freq = freq) {
 
 }
 
+#=============================================================================
+# get_kl
+# The Kullback-Leibler divergence with natural log base.  
+# 
+# freq1 		First standardized probability distribution
+# freq2 		Second probability distribution 
+#=============================================================================
+
+get_kl = function (freq1 = freq1, freq2 = freq2) {
+
+	dims = dim(freq1)[1]
+	kld = sum ( freq1 * log ( freq1/freq2 ), na.rm =T)
+	return(kld)
+
+}
 
 #=============================================================================
 # get_ce
