@@ -52,11 +52,18 @@ sr = c(0.8,0.8)
 #=============================================================================
 #Stored values, i.e. population dynamics, information metrics
 #=============================================================================
-Ni = matrix(1, ngens+1,nspp) #Population w/ information
+Ni1 = matrix(1, ngens+1,nspp) #Population w/ information
+Ni2 = matrix(1, ngens+1,nspp) #Population w/ information
+Ni3 = matrix(1, ngens+1,nspp) #Population w/ information
+Ni4 = matrix(1, ngens+1,nspp) #Population w/ information
 N_noi = matrix(1, ngens+1,nspp) #Population no information
 No = matrix(1, ngens+1,nspp) #Population optimal germination
 
-rho_i = matrix(1, ngens+1,nspp) #Growth rate w/ information
+rho_i1 = matrix(1, ngens+1,nspp) #Growth rate w/ information
+rho_i2 = matrix(1, ngens+1,nspp) #Growth rate w/ information
+rho_i3 = matrix(1, ngens+1,nspp) #Growth rate w/ information
+rho_i4 = matrix(1, ngens+1,nspp) #Growth rate w/ information
+
 rho_noi = matrix(1, ngens+1,nspp) #Growth rate, no information
 rho_o = matrix(1, ngens+1,nspp) #Growth rate, optimal germination
 
@@ -65,7 +72,7 @@ env_sensed = matrix(1, ngens+1,nspp) #Realized environments from sim
 
 sp_fit_i = matrix(1, ngens+1,nspp)
 sp_fit_o = matrix(1, ngens+1,nspp)
-
+gt_e2 = matrix(1,ngens+1,nspp)
 
 sp_act = matrix(1, ngens+1,nspp) #Realized environments from sim
 
@@ -211,12 +218,18 @@ for(s in 1:nspp){
 #This is key somehow:
 incr=0.01
 H1 = seq(0.01,.99,incr)
-a1=sr[1]*(1-matrix(H1,length(H1),10))+kronecker(H1,t(fs[,1]))
+a1=sr[1]*(1-matrix(H1,length(H1),num_states))+kronecker(H1,t(fs[,1]))
 #a1=matrix(sr*(1-H1), length(sr), dim(fs)[1] )+matrix(H1*fs[,1], length(sr),dim(fs)[1],byrow=T)
+a2 = array( matrix(1, num_states,num_states), dim = c(num_states,num_states,nspp) )
+a2[,,1] = sr[1]*(1-gec[,,1])+  gec[,,1]*matrix(fs[,1], num_states, num_states )
+a2[,,2] = sr[2]*(1-gec[,,2])+  gec[,,2]*matrix(fs[,2], num_states, num_states )
 
 g_in_e = H1[apply(a1,2,which.max)]
 # g_in_e = matrix(g_in_e,env)
-# g_in_e2 = g_in_e
+g_in_e2 = a2 
+g_in_e2[,,1] =gec[,,1] * matrix( apply(a2[,,1],2,max) >=1, num_states, num_states,byrow=T ) 
+g_in_e2[,,2] =gec[,,2] * matrix( apply(a2[,,2],2,max) >=1, num_states, num_states,byrow=T ) 
+
 #g_in_e = env_states*g_in_e/(sum(env_states*g_in_e)) 
 ###########
 
@@ -257,25 +270,34 @@ for (t in 1:ngens){
 	#This version is the most similar to the kelly betting example, but does not 
 	#make a lot of ecological sense. In particular, it never makes sense to bet
 	#everything on a really crappy year under conditions of sub-fair odds. 
-	rho_i[t, ] = ( sr*(1-gec[(env_act[t]+1) , , ][ (env_sensed[t,]+1) ] )   + 
+	rho_i1[t, ] = ( sr*(1-gec[(env_act[t]+1) , , ][ (env_sensed[t,]+1) ] )   + 
 				sp_fit_i[t,] * gec[(env_act[t]+1) , , ][ (env_sensed[t,]+1) ]  )
 
 	# #This version uses the germination rate that matches the sensed environment
-	# rho_i[t, ] = ( sr*(1-gs[(env_sensed[t,]+1)] )   + 
-	#  			sp_fit_i[t,] * gs[(env_sensed[t,]+1)] )
+	rho_i2[t, ] = ( sr*(1-gs[(env_sensed[t,]+1)] )   + 
+	  			sp_fit_i[t,] * gs[(env_sensed[t,]+1)] )
 
 	# #This version uses the germination rate that matches the sensed environment
-	# #and assumes that species are selective as to what donditions they germinate
-	# rho_i[t, ] = ( sr*(1-gs[(env_sensed[t,]+1)]*g_in_e[(env_sensed[t,]+1)] )   + 
-	#  			sp_fit_i[t,] * gs[(env_sensed[t,]+1)]*g_in_e[(env_sensed[t,]+1)] )
+	# #and assumes that species are selective as to what conditions they germinate
+	rho_i3[t, ] = ( sr*(1- g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ] )   + 
+	  			sp_fit_i[t,] * g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ] )
+	gt_e2[t, ] =  g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ]
 
-	#This version uses the ideal germination rate that matches the sensed environment
-	rho_i[t, ] = ( sr*(1-g_in_e[(env_sensed[t,]+1)] )   + 
-	 			sp_fit_i[t,] * g_in_e[(env_sensed[t,]+1)] )
+	#This version uses the ideal (max) germination rate that matches the sensed environment
+	rho_i4[t, ] = ( sr*(1-g_in_e[(env_sensed[t,]+1)] )   + 
+	  			sp_fit_i[t,] * g_in_e[(env_sensed[t,]+1)] )
 
+	Ni1[t+1,] = Ni1[t, ] * rho_i1[t, ] 
+	Ni1[t+1,][Ni1[t+1,]<0] = 0
 
-	Ni[t+1,] = Ni[t, ] * rho_i[t, ] 
-	Ni[t+1,][Ni[t+1,]<0] = 0
+	Ni2[t+1,] = Ni2[t, ] * rho_i2[t, ] 
+	Ni2[t+1,][Ni2[t+1,]<0] = 0
+
+	Ni3[t+1,] = Ni3[t, ] * rho_i3[t, ] 
+	Ni3[t+1,][Ni3[t+1,]<0] = 0
+
+	Ni4[t+1,] = Ni4[t, ] * rho_i4[t, ] 
+	Ni4[t+1,][Ni4[t+1,]<0] = 0
 }
 
 
@@ -283,7 +305,10 @@ for (t in 1:ngens){
 nn=1:ngens
 plot(log(No[,1]),t="l", ylim = c(0,300))
 lines(log(N_noi[,1]), col="red")
-lines(log(Ni[,1]),col="blue")
+lines(log(Ni1[,1]),col="blue")
+lines(log(Ni2[,1]),col="orange")
+lines(log(Ni3[,1]),col="green")
+lines(log(Ni4[,1]),col="yellow")
 
 #Theoretical prediction based on optimal germination/betting strategy (gs)
 lines(log(2^(nn*sum(env_prob*log2(gs[,1]*fs[,1])))),col="red")
@@ -303,20 +328,28 @@ Gr = apply( (gs*fs)^matrix(env_prob,num_states,nspp),2,prod)
 env_freq = prop.table(table(env_act)) #Environment frequency
 sE = shannon_D(env_freq) #Shannon entropy
 
-#For species 1: 
-c_and_e = prop.table(table( data.frame ( e =env_act, c = env_sensed[,1]) ))  #Joint prob between env and cue
+#For species 1:
+#Joint probability p(e,c): 
+c_and_e = prop.table(table( data.frame ( e =env_act[1:ngens,1], c = env_sensed[1:ngens,1]) ))  #Joint prob between env and cue
 sCgivenE = shannon_CE (c_and_e) #Conditional entropy H(C|E)
+
+#Marginals: 
+mar_e = rowSums(c_and_e) 
+mar_c = colSums(c_and_e) 
 
 #Mutual information: 
 mI = sE - sCgivenE 
 
-#Divergences: 
 
-rho_i = log(rho_i)
-rho_noi = log(rho_noi)
+#Divergences: 
+breaks = dim(c_and_e)[1]
+rho_i[ngens+1,] = rho_i[ngens,]
+rho_noi[ngens+1,] = rho_noi[ngens,]
+rho_i = (rho_i4)
+r_noi = (rho_noi)
 
 #Probability distribution of growth rates with info
-b_use_i = seq(min(c(rho_noi,rho_i),na.rm=T),max(c(rho_noi,rho_i),na.rm=T), length.out=breaks)
+b_use_i = seq(min(c(r_noi,rho_i),na.rm=T),max(c(r_noi,rho_i),na.rm=T), length.out=(breaks+1) )
 rho_dist_i = hist(rho_i,breaks=b_use_i,plot = FALSE)
 rho_i_p = rho_dist_i$counts/sum(rho_dist_i$counts)
 rho_i_b = rho_dist_i$mids
@@ -326,15 +359,86 @@ rho_i_d = sum(rho_i_p*rho_i_b )
 
 #Probability distribution of growth rates without info
 #b_use_noi = seq(min(rho_noi,na.rm=T),max(rho_noi,na.rm=T), length.out=breaks)
-rho_dist_noi = hist(rho_noi,breaks=b_use_i,plot = FALSE)
+rho_dist_noi = hist(r_noi,breaks=b_use_i,plot = FALSE)
 rho_noi_p = rho_dist_noi$counts/sum(rho_dist_noi$counts)
 rho_noi_b = rho_dist_noi$mids
 
 #Average log growth rate:
 rho_noi_d = sum(rho_noi_p*rho_noi_b )
 
-#Get KL from philentropy:
+#####Get a series of KL divergences between distibutions 
+#####(KL from philentrop)y:
+#KL Divergence of environment, sensed environment
+kl_ec = philentropy::KL( rbind(mar_e,mar_c), unit="log" )
+
+#Conditional of environment given cue p(e|c) 
+c_ce = c_and_e/matrix( mar_c, length(mar_e), length(mar_c),byrow=T )
+
+#Conditional of rho in an environment given cue rho(e|c): 
+rc_df = data.frame ( r = rho_i[1:ngens,1], 
+	c = env_sensed[1:ngens,1])
+
+r_and_c = prop.table(table( rc_df ))  #Joint prob between env and cue 
+
+#We want the rows of r_and_c to match the order of the environments/cues. 
+#This is essential for comparing the distributions via KLD. This can be
+#achieved by sorting rc_df along environment values so that the ordering
+#of rho values now matches the ordering of environment values: 
+order_key = unique( rc_df[order(rc_df[,2] ), ] )
+#Use match() to achieve the reordering
+r_and_c = r_and_c[match(as.character(order_key[,1]), rownames(r_and_c)), ]
+#Marginals 
+mar_r = rowSums(r_and_c) 
+mar_cr = colSums(r_and_c) 
+#Conditional
+r_ce = r_and_c/matrix(mar_cr, length(mar_r), length(mar_cr),byrow=T)
+
+#Joint distribution of rho_noi and environment
+rnoi_and_e = prop.table(table(  data.frame ( r = r_noi[1:ngens,1], 
+	e = env_act[1:ngens,1]) ))
+mar_noir = rowSums(rnoi_and_e) 
+mar_noie = colSums(rnoi_and_e) 
+
+c_rnoi = rnoi_and_e/matrix(mar_noie, length(mar_noir), length(mar_noie),byrow=T)
+
+#Divergence between environment and rho with information 
+kl1 = philentropy::KL( rbind(mar_e, mar_r), unit="log" )
+
+#Conditional KL Divergence between environment and rho
+kl_egc = 0 
+for( s in 1:length(mar_c) ){  
+	#Inner sum is across all entries (rows) in a specific column of the conditional 
+	#probability table
+	kl_egc_tmp = philentropy::KL( rbind(c_ce[,s], r_ce[,s]), unit="log" )
+	kl_egc = kl_egc+kl_egc_tmp
+}
+
+
+#Conditional of seeing 
+
+#What is this? Why does this work (when rho is log(rho) )? 
 kl1 = philentropy::KL(rbind(rho_noi_p, rho_i_p), unit = "log") 
+
+
+#These are the unconditional and conditional divergences from Box 1:
+#c_and_r = prop.table(table( data.frame ( c = env_act[1:ngens,1], e = rho_i[1:ngens,1]  ) ))
+c_and_r1 = prop.table(table( data.frame ( c = env_sensed[1:ngens,1], e = env_act[1:ngens,1]  ) ))
+c_and_r = prop.table(table( data.frame ( c = gt_e2[1:ngens,1], e = env_act[1:ngens,1]  ) ))
+
+mar_x = rowSums(c_and_r) 
+mar_y = colSums(c_and_r) 
+
+kl_u = philentropy::KL( rbind(mar_x,mar_y), unit="log" )
+
+
+kl_c = 0 
+for( s in 1:) philentropy::KL( )
+
+dims = breaks
+mar_x = rowSums(c_and_r) 
+mx_table = matrix(mar_x, dims,dims)
+c_g_r =  c_and_r/mx_table
+
 
 ####Save stuff for figures
 save(file ="dm_simp.var",Ni, No, N_noi, rho_noi, rho_o, rho_i, gs_o, gj, gce, gec, 

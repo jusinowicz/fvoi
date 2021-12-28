@@ -210,6 +210,7 @@ get_cp = function(env_states, acc){
 			if(a_rr == tol ){cp_tmp[n] = mean(cp_tmp); cp_tmp = cp_tmp/sum(cp_tmp) }
 
 			cp_out[,n,s] = cp_tmp[1:num_states]
+			cp_out[,n,s] = cp_out[,n,s]/sum(cp_out[,n,s] )
 		}
 	}
 
