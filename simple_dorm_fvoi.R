@@ -366,7 +366,7 @@ r_noi = (rho_noi)
 ds_noi = data.frame(gs = gnoi_fit[,1], envr = sp_fit_o[,1], rho = rho_noi[,1]  )
 ds_i = data.frame(gs = g_in_e[ (env_sensed[,1]+1) ], envr = sp_fit_i[,1], rho = rho_i [,1])
 ds_all = full_join(ds_i,ds_noi,by =c("gs","envr") )
-
+ds_all$rho.x[is.na(ds_all$rho.x)] = 0
 
 #Probability distribution of growth rates with info
 b_use_i = seq(min(c(r_noi,rho_i),na.rm=T),max(c(r_noi,rho_i),na.rm=T), length.out=(breaks+1) )
@@ -397,6 +397,9 @@ c_ce = c_and_e/matrix( mar_c, length(mar_e), length(mar_c),byrow=T )
 #Conditional of rho in an environment given cue rho(e|c): 
 rc_df = data.frame ( r = rho_i[1:ngens,1], 
 	c = env_sensed[1:ngens,1])
+
+# rc_df = data.frame ( r = ds_all$rho.x, 
+# 	c = ds_all$envr)
 
 r_and_c = prop.table(table( rc_df ))  #Joint prob between env and cue 
 
