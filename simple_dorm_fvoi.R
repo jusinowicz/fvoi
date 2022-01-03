@@ -365,8 +365,6 @@ r_noi = (rho_noi)
 #Make these data sets to mimic actual sampling: 
 ds_noi = data.frame(gs = gnoi_fit[,1], envr = sp_fit_o[,1], rho = rho_noi[,1]  )
 ds_i = data.frame(gs = g_in_e[ (env_sensed[,1]+1) ], envr = sp_fit_i[,1], rho = rho_i [,1])
-ds_all = full_join(ds_i,ds_noi,by =c("gs","envr") )
-ds_all$rho.x[is.na(ds_all$rho.x)] = 0
 
 #Probability distribution of growth rates with info
 b_use_i = seq(min(c(r_noi,rho_i),na.rm=T),max(c(r_noi,rho_i),na.rm=T), length.out=(breaks+1) )
@@ -388,18 +386,12 @@ rho_noi_d = sum(rho_noi_p*rho_noi_b )
 
 #####Get a series of KL divergences between distibutions 
 #####(KL from philentrop)y:
-#KL Divergence of environment, sensed environment
-kl_ec = philentropy::KL( rbind(mar_e,mar_c), unit="log" )
-
+#First, build probability distributions from data: 
 #Conditional of environment given cue p(e|c) 
 c_ce = c_and_e/matrix( mar_c, length(mar_e), length(mar_c),byrow=T )
 
 #Conditional of rho in an environment given cue rho(e|c): 
 rc_df = data.frame ( r = rho_i[1:ngens,1], 
-	c = env_sensed[1:ngens,1])
-
-#Conditional of germination in an environment given cue rho(e|c): 
-gc_df = data.frame ( g = ds_i$gs[1:ngens], 
 	c = env_sensed[1:ngens,1])
 
 r_and_c = prop.table(table( rc_df ))  #Joint prob between env and cue 
@@ -418,25 +410,24 @@ mar_cr = colSums(r_and_c)
 r_ce = r_and_c/matrix(mar_cr, length(mar_r), length(mar_cr),byrow=T)
 
 #Joint distribution of rho_noi and environment
-rnoi_and_e = prop.table(table(  data.frame ( r = r_noi[1:ngens,1], 
-	e = env_act[1:ngens,1]) ))
+# rnoi_and_e = prop.table(table(  data.frame ( r = r_noi[1:ngens,1], 
+# 	e = env_act[1:ngens,1]) ))
+# mar_noir = rowSums(rnoi_and_e) 
+# mar_noie = colSums(rnoi_and_e) 
+
+# c_rnoi = rnoi_and_e/matrix(mar_noie, length(mar_noir), length(mar_noie),byrow=T)
+
+#Joint distribution of rho_noi and environment -- use marginals of environment
+rnoi_and_e = r_and_c
+rnoi_and_e = matrix( mar_cr/dim(r_ce)[1], dim(r_ce)[1],dim(r_ce)[2],byrow=T)
 mar_noir = rowSums(rnoi_and_e) 
 mar_noie = colSums(rnoi_and_e) 
 
 c_rnoi = rnoi_and_e/matrix(mar_noie, length(mar_noir), length(mar_noie),byrow=T)
 
-#Joint distribution of rho_noi and environment
-rnoi_and_e = prop.table(table( rc_df ))
-rnoi_and_e = matrix( 1/(dim(r_ce)[1]* dim(r_ce)[2]), dim(r_ce)[1],dim(r_ce)[2] )
-mar_noir = rowSums(rnoi_and_e) 
-mar_noie = colSums(rnoi_and_e) 
+#KL Divergence of environment, sensed environment
+kl_ec = philentropy::KL( rbind(mar_e,mar_c), unit="log" )
 
-c_rnoi = rnoi_and_e/matrix(mar_noie, length(mar_noir), length(mar_noie),byrow=T)
-
-
-
-v1 = unique(rho_i[,1]) [order(unique (rho_i[,1]) ) ]
-v2 = unique(rho_noi[,1])[order(unique (rho_noi[,1]) )]
 #Divergence between environment and rho with information 
 kl1 = philentropy::KL( rbind(mar_e, mar_r), unit="log" )
 
@@ -451,33 +442,6 @@ for( s in 1:length(mar_c) ){
 	kl_egc_tmp = philentropy::KL( rbind(c_ce[,s], r_ce[,s]), unit="log" )
 	kl_egc = kl_egc+kl_egc_tmp
 }
-
-
-#Conditional of seeing 
-
-#What is this? Why does this work (when rho is log(rho) )? 
-kl1 = philentropy::KL(rbind(rho_noi_p, rho_i_p), unit = "log") 
-
-
-#These are the unconditional and conditional divergences from Box 1:
-#c_and_r = prop.table(table( data.frame ( c = env_act[1:ngens,1], e = rho_i[1:ngens,1]  ) ))
-c_and_r1 = prop.table(table( data.frame ( c = env_sensed[1:ngens,1], e = env_act[1:ngens,1]  ) ))
-c_and_r = prop.table(table( data.frame ( c = gt_e2[1:ngens,1], e = env_act[1:ngens,1]  ) ))
-
-mar_x = rowSums(c_and_r) 
-mar_y = colSums(c_and_r) 
-
-kl_u = philentropy::KL( rbind(mar_x,mar_y), unit="log" )
-
-
-kl_c = 0 
-for( s in 1:) philentropy::KL( )
-
-dims = breaks
-mar_x = rowSums(c_and_r) 
-mx_table = matrix(mar_x, dims,dims)
-c_g_r =  c_and_r/mx_table
-
 
 ####Save stuff for figures
 save(file ="dm_simp.var",Ni, No, N_noi, rho_noi, rho_o, rho_i, gs_o, gj, gce, gec, 
