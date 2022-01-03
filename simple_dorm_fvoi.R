@@ -57,6 +57,7 @@ Ni2 = matrix(1, ngens+1,nspp) #Population w/ information
 Ni3 = matrix(1, ngens+1,nspp) #Population w/ information
 Ni4 = matrix(1, ngens+1,nspp) #Population w/ information
 N_noi = matrix(1, ngens+1,nspp) #Population no information
+N_noi2 = matrix(1, ngens+1,nspp) #Population no information
 No = matrix(1, ngens+1,nspp) #Population optimal germination
 
 rho_i1 = matrix(1, ngens+1,nspp) #Growth rate w/ information
@@ -65,6 +66,7 @@ rho_i3 = matrix(1, ngens+1,nspp) #Growth rate w/ information
 rho_i4 = matrix(1, ngens+1,nspp) #Growth rate w/ information
 
 rho_noi = matrix(1, ngens+1,nspp) #Growth rate, no information
+rho_noi2 = matrix(1, ngens+1,nspp) #Growth rate, no information,from actual gr
 rho_o = matrix(1, ngens+1,nspp) #Growth rate, optimal germination
 
 env_act = matrix(1, ngens+1,1) #Realized environments from sim
@@ -81,6 +83,7 @@ sp_act = matrix(1, ngens+1,nspp) #Realized environments from sim
 gi_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
 go_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
 gnoi_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
+gnoi_fit2 = matrix(1, ngens+1,nspp) #Realized fitness from sim
 
 
 #=============================================================================
@@ -233,6 +236,8 @@ g_in_e2[,,2] =gec[,,2] * matrix( apply(a2[,,2],2,max) >=1, num_states, num_state
 #g_in_e = env_states*g_in_e/(sum(env_states*g_in_e)) 
 ###########
 
+#Use this for the runif samples: 
+gs_noi_tmp = seq(0,0.99,1/(length(gs)-1) )
 
 #=============================================================================
 #Population dynamics
@@ -243,13 +248,21 @@ for (t in 1:ngens){
 	env_act[t] = fit_tmp$env_act #Store the env state
 	sp_fit_o[t,] = fs[(env_act[t]+1), ]
 
-	#No information
+	#No information, v1: totally random
 	#rho_noi[t+1, ] = ( sr*(1-gs_noi[c(which_env)])   + sp_fit * gs_noi[c(which_env)]  ) 
-	gs_noi = runif(nspp)
+	#gs_noi = runif(nspp)
+	gs_noi = sample(gs_noi_tmp,nspp,replace=T)
 	gnoi_fit[t,] = gs_noi 
 	rho_noi[t, ] = ( sr*(1-gnoi_fit[t,])   + sp_fit_o[t,]  * gnoi_fit[t,] ) 
 	N_noi[t+1,] = N_noi[t, ] * rho_noi[t, ] 
 	N_noi[t+1,][N_noi[t+1,]<0] = 0
+
+	#No information, v2: random sampling from "observed" germination rates
+	gs_noi2 = apply(gs,2, sample)    
+	gnoi_fit2[t,] = gs_noi2[1,] 
+	rho_noi2[t, ] = ( sr*(1-gnoi_fit2[t,])   + sp_fit_o[t,]  * gnoi_fit2[t,] ) 
+	N_noi2[t+1,] = N_noi2[t, ] * rho_noi2[t, ] 
+	N_noi2[t+1,][N_noi2[t+1,]<0] = 0
 	
 	#Optimal constant betting
 	rho_o[t, ] = ( sr*(1-gs_o[(env_act[t]+1),] )   + sp_fit_o[t,] * gs_o[(env_act[t]+1),]  ) 
@@ -303,15 +316,16 @@ for (t in 1:ngens){
 
 #Plot the population growth
 nn=1:ngens
-plot(log(No[,1]),t="l", ylim = c(0,300))
+plot(log(No[,1]),t="l", ylim = c(-50,300))
 lines(log(N_noi[,1]), col="red")
+lines(log(N_noi2[,1]), col="red",lty = 2)
 lines(log(Ni1[,1]),col="blue")
 lines(log(Ni2[,1]),col="orange")
 lines(log(Ni3[,1]),col="green")
 lines(log(Ni4[,1]),col="yellow")
 
 #Theoretical prediction based on optimal germination/betting strategy (gs)
-lines(log(2^(nn*sum(env_prob*log2(gs[,1]*fs[,1])))),col="red")
+lines(log(2^(nn*sum(env_prob*log2(gs[,1]*fs[,1])))),col="red",lty=4)
 #Theoretical prediction when optimal germination matches actual probs
 Wbp = log2(env_prob*fs[,1])
 Wbp[!is.finite(Wbp)] = 0
@@ -401,6 +415,9 @@ mar_noie = colSums(rnoi_and_e)
 
 c_rnoi = rnoi_and_e/matrix(mar_noie, length(mar_noir), length(mar_noie),byrow=T)
 
+
+v1 = unique(rho_i[,1]) [order(unique (rho_i[,1]) ) ]
+v2 = unique(rho_noi[,1])[order(unique (rho_noi[,1]) )]
 #Divergence between environment and rho with information 
 kl1 = philentropy::KL( rbind(mar_e, mar_r), unit="log" )
 
