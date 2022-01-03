@@ -355,12 +355,18 @@ mar_c = colSums(c_and_e)
 mI = sE - sCgivenE 
 
 
-#Divergences: 
+#####Divergences: 
+#Make some data sets:
 breaks = dim(c_and_e)[1]
 rho_i[ngens+1,] = rho_i[ngens,]
 rho_noi[ngens+1,] = rho_noi[ngens,]
 rho_i = (rho_i4)
 r_noi = (rho_noi)
+#Make these data sets to mimic actual sampling: 
+ds_noi = data.frame(gs = gnoi_fit[,1], envr = sp_fit_o[,1], rho = rho_noi[,1]  )
+ds_i = data.frame(gs = g_in_e[ (env_sensed[,1]+1) ], envr = sp_fit_i[,1], rho = rho_i [,1])
+ds_all = full_join(ds_i,ds_noi,by =c("gs","envr") )
+
 
 #Probability distribution of growth rates with info
 b_use_i = seq(min(c(r_noi,rho_i),na.rm=T),max(c(r_noi,rho_i),na.rm=T), length.out=(breaks+1) )
