@@ -24,8 +24,8 @@
 library(tidyverse)
 library(RandomFields)
 library(vegan)
-source("./env_functions.R")
-source("./info_theory_functions.R")
+source("./../env_functions.R")
+source("./../info_theory_functions.R")
 #=============================================================================
 #Declare variables 
 #=============================================================================

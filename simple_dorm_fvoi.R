@@ -420,8 +420,22 @@ r_ce = r_and_c/matrix(mar_cr, length(mar_r), length(mar_cr),byrow=T)
 # c_rnoi = rnoi_and_e/matrix(mar_noie, length(mar_noir), length(mar_noie),byrow=T)
 
 #Joint distribution of rho_noi and environment -- use marginals of environment
+bur = seq(0,1,1/(breaks) )
+rni = hist(gnoi_fit[,1],breaks = bur)
+gnuse = gnoi_fit[,1]
+
+for (b in 1:breaks){ 
+	gnuse[gnuse >= bur[b] & gnuse <= bur[b+1] ] = bur[b]
+
+}
+
+rnoi_and_e = prop.table(table( data.frame (g = gnuse[1:ngens], c = env_sensed[1:ngens,1] ) ) ) 
+
+
 rnoi_and_e = r_and_c
+
 rnoi_and_e = matrix( mar_cr/num_states, dim(r_ce)[1],dim(r_ce)[2],byrow=T)
+
 mar_noir = rowSums(rnoi_and_e) 
 mar_noie = colSums(rnoi_and_e) 
 
@@ -452,6 +466,7 @@ rnoi_I = gp1-sE-klr
 
 #This should be the equivalent of rho_i 
 ri_I = gp1 - sCgivenE - kl_egc
+
 ####Save stuff for figures
 save(file ="dm_simp.var",Ni, No, N_noi, rho_noi, rho_o, rho_i, gs_o, gj, gce, gec, 
 		 sE, sCgivenE, mI, mI_sim,env_act,env_sensed)
