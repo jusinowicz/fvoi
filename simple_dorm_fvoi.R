@@ -237,12 +237,13 @@ g_in_e2[,,2] =gec[,,2] * matrix( apply(a2[,,2],2,max) >=1, num_states, num_state
 ###########
 
 #Use this for the runif samples: 
+gs = cbind(env_states,env_states)	
 gs_noi_tmp = seq(0,0.99,1/(length(gs)-1) )
 
 #=============================================================================
 #Population dynamics
 #=============================================================================	
-gs = cbind(env_states,env_states)	
+
 for (t in 1:ngens){
 	fit_tmp = get_fit_one(env_states, fs)
 	env_act[t] = fit_tmp$env_act #Store the env state
@@ -250,8 +251,8 @@ for (t in 1:ngens){
 
 	#No information, v1: totally random
 	#rho_noi[t+1, ] = ( sr*(1-gs_noi[c(which_env)])   + sp_fit * gs_noi[c(which_env)]  ) 
-	#gs_noi = runif(nspp)
-	gs_noi = sample(gs_noi_tmp,nspp,replace=T)
+	gs_noi = runif(nspp)
+	#gs_noi = sample(gs_noi_tmp,nspp,replace=T)
 	gnoi_fit[t,] = gs_noi 
 	rho_noi[t, ] = ( sr*(1-gnoi_fit[t,])   + sp_fit_o[t,]  * gnoi_fit[t,] ) 
 	N_noi[t+1,] = N_noi[t, ] * rho_noi[t, ] 
@@ -360,8 +361,9 @@ mI = sE - sCgivenE
 breaks = dim(c_and_e)[1]
 rho_i[ngens+1,] = rho_i[ngens,]
 rho_noi[ngens+1,] = rho_noi[ngens,]
-rho_i = (rho_i4)
-r_noi = (rho_noi)
+rho_i = log(rho_i4)
+r_noi = log(rho_noi)
+
 #Make these data sets to mimic actual sampling: 
 ds_noi = data.frame(gs = gnoi_fit[,1], envr = sp_fit_o[,1], rho = rho_noi[,1]  )
 ds_i = data.frame(gs = g_in_e[ (env_sensed[,1]+1) ], envr = sp_fit_i[,1], rho = rho_i [,1])
@@ -419,7 +421,7 @@ r_ce = r_and_c/matrix(mar_cr, length(mar_r), length(mar_cr),byrow=T)
 
 #Joint distribution of rho_noi and environment -- use marginals of environment
 rnoi_and_e = r_and_c
-rnoi_and_e = matrix( mar_cr/dim(r_ce)[1], dim(r_ce)[1],dim(r_ce)[2],byrow=T)
+rnoi_and_e = matrix( mar_cr/num_states, dim(r_ce)[1],dim(r_ce)[2],byrow=T)
 mar_noir = rowSums(rnoi_and_e) 
 mar_noie = colSums(rnoi_and_e) 
 
@@ -443,6 +445,13 @@ for( s in 1:length(mar_c) ){
 	kl_egc = kl_egc+kl_egc_tmp
 }
 
+#This should be the equivalent of rho_noi 
+( sr*(1-g_in_e)   + fs[,1]  * g_in_e ) 
+gp1 = sum(env_prob*log( sr*(1-g_in_e)   + fs[,1]  * g_in_e ) ) #Maximum achievable gr 
+rnoi_I = gp1-sE-klr 
+
+#This should be the equivalent of rho_i 
+ri_I = gp1 - sCgivenE - kl_egc
 ####Save stuff for figures
 save(file ="dm_simp.var",Ni, No, N_noi, rho_noi, rho_o, rho_i, gs_o, gj, gce, gec, 
 		 sE, sCgivenE, mI, mI_sim,env_act,env_sensed)

@@ -116,10 +116,6 @@ for (s in 1:nspp) { fs[,s] = get_species_fit(probs=env_prob, fcor = fs_cor, fm=f
 	method=fm_method )}
 hist(fs) #Show fitness distribution 
 
-mstates=floor(num_states/2)
-fs = get_species_fit_pois(mstates, num_states, nspp,fm )
-
-
 ####Conditional germination fraction i.e. germination with information
 #This function creates a table of conditional probabilities based on the
 #G(E|C)
@@ -171,7 +167,6 @@ for (t in 1:ngens){
 	sp_fit_i = matrix((0:(num_states-1)),num_states,nspp)
 	for( s in 1:nspp){ 
 		env_sensed[t,s] = sample(x=(0:(num_states-1)), size=1, prob =gce[ (env_act[t]+1),,s], replace=T)
-		env_sensed[t,s] = 
 		ec = env_sensed[t,s]
 		sp_fit_i[,s][sp_fit_i[,s]!=ec] = -1 #Identify losers
 		sp_fit_i[,s][sp_fit_i[,s]==ec] = fs[,s][sp_fit_i[,s]==ec] #Set winning state to its payout
@@ -268,19 +263,19 @@ rc_df = data.frame ( r = rho_i[1:ngens,1],
 
 r_and_c = prop.table(table( rc_df ))  #Joint prob between env and cue 
 
-#We want the rows of r_and_c to match the order of the environments/cues. 
-#This is essential for comparing the distributions via KLD. This can be
-#achieved by sorting rc_df along environment values so that the ordering
-#of rho values now matches the ordering of environment values: 
-order_key = unique( rc_df[ order(rc_df[,2] ), ] )
-#Use match() to achieve the reordering
-r_and_c = r_and_c[match(as.character(order_key[,1]), rownames(r_and_c)), ]
+# #We want the rows of r_and_c to match the order of the environments/cues. 
+# #This is essential for comparing the distributions via KLD. This can be
+# #achieved by sorting rc_df along environment values so that the ordering
+# #of rho values now matches the ordering of environment values: 
+# order_key = unique( rc_df[ order(rc_df[,2] ), ] )
+# #Use match() to achieve the reordering
+# r_and_c = r_and_c[match(as.character(order_key[,1]), rownames(r_and_c)), ]
 
-# #Just do this for now with perfect information: 
-# r_and_c2 = diag(c(r_and_c), nrow =dim(r_and_c)[2],ncol=dim(r_and_c)[2] ) 
-# colnames(r_and_c2) = colnames(r_and_c)                                                                                                               
-# rownames(r_and_c2) = matrix(rownames(r_and_c),dim(r_and_c)[2] ,1)   
-# r_and_c = r_and_c2
+#Just do this for now with perfect information and fair odds: 
+r_and_c2 = diag(c(r_and_c), nrow =dim(r_and_c)[2],ncol=dim(r_and_c)[2] ) 
+colnames(r_and_c2) = colnames(r_and_c)                                                                                                               
+rownames(r_and_c2) = matrix(rownames(r_and_c),dim(r_and_c)[2] ,1)   
+r_and_c = r_and_c2
 
 #Marginals 
 mar_r = rowSums(r_and_c) 
@@ -329,6 +324,15 @@ rnoi_I = gp1-sE-klr
 #This should be the equivalent of rho_i 
 ri_I = gp1 - sCgivenE - kl_egc
 
+#Note: There is a key distinction in these results vs. what is in Donaldson-Matsci et al 2010.
+#They find that the MI is an upper limit on the FVOI, which is not necessarily the case here. 
+#This difference arises because they assume that the "no information" scenario is on in which 
+#the probability of environmental response (i.e. germination rates here) is based on the marginals
+#of an underlying joint probability distribution that describes both sets of responses, with and 
+#without information. We take a different approach which uses a hypothetical, maximum entropy 
+#approach which uses a random uniform distribution as the baseline. This increases the upper limit 
+#on the fitness value of information because the KLD(p(e)| x(e)) [variable klr] is not 0, as it would
+#be under the Donaldson-Matasci assumption. 
 
 ####Save stuff for figures
 save(file = "ni_simple.var", Ni, Ni2, Ni_i, rhoi_i, rhoi2, sE, sCgivenE, mI, 
