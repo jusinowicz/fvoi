@@ -253,6 +253,7 @@ for (t in 1:ngens){
 	#rho_noi[t+1, ] = ( sr*(1-gs_noi[c(which_env)])   + sp_fit * gs_noi[c(which_env)]  ) 
 	gs_noi = runif(nspp)
 	#gs_noi = sample(gs_noi_tmp,nspp,replace=T)
+	gs_noi = c(1/num_states, 1/num_states)
 	gnoi_fit[t,] = gs_noi 
 	rho_noi[t, ] = ( sr*(1-gnoi_fit[t,])   + sp_fit_o[t,]  * gnoi_fit[t,] ) 
 	N_noi[t+1,] = N_noi[t, ] * rho_noi[t, ] 
@@ -386,6 +387,14 @@ rho_noi_b = rho_dist_noi$mids
 #Average log growth rate:
 rho_noi_d = sum(rho_noi_p*rho_noi_b )
 
+b_use_i = log(sr[1]*(1-mar_noir)   + fs[1:9,1]  * mar_noir )
+names(b_use_i) = as.character(0:8) 
+b_use_i = sort(b_use_i) 
+
+a3= cbind(c(0, rho_noi_p), b_use_i)
+a3 = a3[sort(rownames(a3)),]  
+sum(a3[,1]*a3[,2]+1E-10) 
+
 #####Get a series of KL divergences between distibutions 
 #####(KL from philentrop)y:
 #First, build probability distributions from data: 
@@ -419,21 +428,18 @@ r_ce = r_and_c/matrix(mar_cr, length(mar_r), length(mar_cr),byrow=T)
 
 # c_rnoi = rnoi_and_e/matrix(mar_noie, length(mar_noir), length(mar_noie),byrow=T)
 
-#Joint distribution of rho_noi and environment -- use marginals of environment
-bur = seq(0,1,1/(breaks) )
-rni = hist(gnoi_fit[,1],breaks = bur)
-gnuse = gnoi_fit[,1]
+# #Joint distribution of rho_noi and environment -- use marginals of environment
+# bur = seq(0,1,1/(breaks) )
+# rni = hist(gnoi_fit[,1],breaks = bur)
+# gnuse = gnoi_fit[,1]
 
-for (b in 1:breaks){ 
-	gnuse[gnuse >= bur[b] & gnuse <= bur[b+1] ] = bur[b]
+# for (b in 1:breaks){ 
+# 	gnuse[gnuse >= bur[b] & gnuse <= bur[b+1] ] = bur[b]
 
-}
+# }
 
-rnoi_and_e = prop.table(table( data.frame (g = gnuse[1:ngens], c = env_sensed[1:ngens,1] ) ) ) 
-
-
+# rnoi_and_e = prop.table(table( data.frame (g = gnuse[1:ngens], c = env_sensed[1:ngens,1] ) ) ) 
 rnoi_and_e = r_and_c
-
 rnoi_and_e = matrix( mar_cr/num_states, dim(r_ce)[1],dim(r_ce)[2],byrow=T)
 
 mar_noir = rowSums(rnoi_and_e) 
@@ -460,8 +466,14 @@ for( s in 1:length(mar_c) ){
 }
 
 #This should be the equivalent of rho_noi 
-( sr*(1-g_in_e)   + fs[,1]  * g_in_e ) 
+sum(env_prob[1:9]*log( sr[1]*(1-mar_noir)   + fs[1:9,1]  * mar_noir ) )  
+
+f1 = ( sr[1]*(1-g_in_e)   + fs[,1]  * g_in_e ) /g_in_e 
+f2 = (sr[1]*(1-mar_noir)   + fs[1:9,1]  * mar_noir)/mar_noir   
+gp2 = sum(env_prob[1:9]*log(f2)) #This is actually the max achievable gr
+gp1 = sum( env_prob*log(f1 ))
 gp1 = sum(env_prob*log( sr*(1-g_in_e)   + fs[,1]  * g_in_e ) ) #Maximum achievable gr 
+gp1 = (env_prob*log( sr[1]*(1-g_in_e2)   + fs[,1]  * g_in_e2 ) ) #Maximum achievable gr 
 rnoi_I = gp1-sE-klr 
 
 #This should be the equivalent of rho_i 
