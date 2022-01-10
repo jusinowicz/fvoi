@@ -121,6 +121,7 @@ p3 = ggplot( cp1, aes(x = c, y = e)) +
 p3
 
 
+
 c_use2 = c(color="#440154FF","#35B779FF","#440154FF","#35B779FF"  )
 
 
@@ -159,7 +160,7 @@ c_use3 = c("#35B779FF","#35B779FF"  )
 
 p5 = ggplot() + geom_line(data=ll_sub, aes(x=time, y=N,color =species )) +
 geom_smooth(data=ll_sub, method="lm", aes(x=time, y=N,color =species), se=FALSE, linetype = 1) +
-geom_text( aes(x = xpos2, y = ypos2, label = suse2, color = suse2) ) +
+geom_text( aes(x = xpos2, y = ypos2, label = suse2, color = suse2) ) + +
 scale_color_manual(values=c_use3)+
  #scale_colour_viridis_d()+ 
  	ylab("Population")+ xlab("Time")+ 
@@ -189,6 +190,268 @@ g=grid.arrange( arrangeGrob(p1, ncol=1, nrow=1 ),
 				)
 
 ggsave(file="figure1.pdf",g)
+
+
+
+#########################################################################################################
+#Basic histograms of environment
+
+
+s <- subplot(
+  plot_ly(x = elt$fr1, type = "histogram", showlegend=FALSE),
+  plotly_empty(),
+  plot_ly(x = elt$fr1, y =elt$gr1, type = "histogram2dcontour", showlegend=FALSE),
+  plot_ly(y = elt$gr1, type = "histogram", showlegend=FALSE),
+  nrows = 2, heights = c(0.2, 0.8), widths = c(0.8, 0.2),
+  shareX = TRUE, shareY = TRUE, titleX = FALSE, titleY = FALSE
+)
+
+layout(s)
+
+er1 = data.frame(fr1 = rnorm(1000, 20, 5), fr2 = rnorm(1000,25,1) )
+
+xpos2 = c(8)
+ypos2 = c(0.3)
+
+hh1 = hist(er1$fr1,breaks=30)
+h1 = shannon_D(hh1$counts/sum(hh1$counts))
+he1 = paste( "H(E)=", round(h1,2) )
+
+hh2 = hist(er1$fr2,breaks = hh1$breaks)
+h2 = shannon_D(hh2$counts/sum(hh2$counts))
+he2 = paste( "H(E)=", round(h2,2))
+
+
+p0=ggplot()+geom_histogram(data=er1,aes(x=fr1,y=(..count..)/sum(..count..)),color="black",fill="white")+
+ylab("Frequency")+ xlab("Temperature")+scale_x_continuous(limits = c(0, 35)) + 
+scale_y_continuous(limits = c(0, 0.5)) +
+theme_bw() + geom_text( aes(x = xpos2, y = ypos2, label = he1,size=20) ) + theme(
+	text = element_text(size=16),
+	panel.border = element_blank(), panel.grid.major = element_blank(),
+	panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+	legend.position = "none"
+	)
+p0
+
+
+p1=ggplot()+geom_histogram(data=er1, aes(x=fr2,y=(..count..)/sum(..count..)),color="black",fill="white")+
+ylab("")+ xlab("Temperature")+scale_x_continuous(limits = c(0, 35))+
+scale_y_continuous(limits = c(0, 0.5)) +
+theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = he2,size=20) )  + theme(
+	text = element_text(size=16),
+	panel.border = element_blank(), panel.grid.major = element_blank(),
+	panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+	legend.position = "none"
+	)
+p1
+
+g1=grid.arrange( arrangeGrob(ncol=2, nrow = 1, p0,p1) ) 
+
+
+#Data for general KL divergence figure 
+er2a = data.frame(fr1= er1$fr2, fr2=er1$fr2-0.5 )
+er2b = data.frame(fr1 = er1$fr2-5, fr2= er1$fr2 )
+er2aL = gather(er2a, fr)
+er2bL = gather(er2b, fr)
+
+c_use = c("#440154FF","#35B779FF" )
+
+xpos2 = c(8)
+ypos2 = c(0.3)
+
+#Use the breaks from last part to make this meaningful:
+hk1 = hist(er2a$fr1,breaks = hh1$breaks)
+hk2 = hist(er2a$fr2, breaks = hh1$breaks)
+p1 = hk1$counts/sum(hk1$counts) + 1/30
+p1 = p1/sum(p1)
+p2 = hk2$counts/sum(hk2$counts) + 1/30
+p2 = p2/sum(p2)
+kdif1 = p1*log(p1/p2)
+kdif1[!(is.finite(kdif1))] = 0 
+n1= data.frame(d1 = c(0,kdif1), y = hh1$breaks)
+
+
+hk1 = hist(er2b$fr1,breaks = hh1$breaks)
+hk2 = hist(er2b$fr2, breaks = hh1$breaks )
+p1 = hk1$counts/sum(hk1$counts) + 1/30
+p1 = p1/sum(p1)
+p2 = hk2$counts/sum(hk2$counts) + 1/30
+p2 = p2/sum(p2)
+kdif2 = p1*log(p1/p2)
+#kdif2[!(is.finite(kdif2))] = 0 
+n2 = data.frame(d1 = c(0,kdif2), y = hh1$breaks)
+
+
+k1 = sum(kdif1)
+kd1 = paste( "KLD =", round(k1,2))
+
+k2 = sum(kdif2)
+kd2 = paste( "KLD =", round(k2,2))
+
+p3 = ggplot()+
+geom_bar(data=n1, aes(x = y, y = d1), stat="identity"  ) +
+geom_histogram(data=er2aL, aes(x=value, y=(..count..)/sum(..count..), fill = fr ),alpha=0.4, color="black") +
+scale_fill_manual(values=c_use)+ 
+scale_y_continuous(limits = c(-0.1, 0.5)) +
+ylab("Frequency, Divergence (nats) ") + xlab("Temperature")+scale_x_continuous(limits = c(0, 35)) +
+theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = kd1,size=20) )  + theme(
+	text = element_text(size=16),
+	panel.border = element_blank(), panel.grid.major = element_blank(),
+	panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+	legend.position = "none"
+	)
+p3
+
+
+p4 = ggplot()+
+geom_bar(data=n2, aes(x = y, y = d1), stat="identity"  ) +
+geom_histogram(data=er2bL, aes(x=value, y=(..count..)/sum(..count..), fill = fr ),alpha=0.4,, color="black") +
+scale_fill_manual(values=c_use)+ 
+scale_y_continuous(limits = c(-0.1, 0.5)) +
+ylab("") + xlab("Temperature")+scale_x_continuous(limits = c(0, 35))+
+theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = kd2,size=20) )  + theme(
+	text = element_text(size=16),
+	panel.border = element_blank(), panel.grid.major = element_blank(),
+	panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+	legend.position = "none"
+	)
+p4
+
+g2=grid.arrange( arrangeGrob(ncol=2, nrow = 1, p3,p4) ) 
+
+
+
+#The mutual information, as a joint pdf
+#Generate correlated random variables: 
+mi1 = MASS::mvrnorm(1000, mu=c(25,25), matrix( c(5,2,1,2),2,2 ) )
+#Uncorrelated: 
+mi2 = MASS::mvrnorm(1000, mu=c(25,25), matrix( c(5,0,0,2),2,2 ) )
+
+mid1 = data.frame(mi1= mi1[,1],mi2 =mi1[,2])
+mid1L = gather(mid1, mi)
+mid2 = data.frame(mi1= mi2[,1],mi2 =mi2[,2])
+mid2L = gather(mid2, mi)
+
+xpos2 = c(8)
+ypos2 = c(0.3)
+
+library(RColorBrewer)
+rf = colorRampPalette(rev(brewer.pal(11,'Spectral')))
+r = rf(32)
+
+kh1 = MASS::kde2d(x=mid1[,1],y=mid1[,2]  )
+kh2 = MASS::kde2d(x=mid2[,1],y=mid2[,2] )
+image(kh2,col=r)
+
+xy1 = expand.grid(x=kh1$x, y=kh1$y)
+xy2 = expand.grid(x=kh1$x, y=kh1$y)
+
+kh1u = data.frame(xy1, z = c(kh1$z))
+kh2u = data.frame(xy2, z = c(kh2$z))
+
+
+#These three are all for the first plot: 
+p5 = ggplot()+
+geom_histogram(data=mid1, aes(x=mi1, y=(..count..)/sum(..count..), fill = c_use[1] ), color="black") +
+scale_fill_manual(values=c_use[1])+ 
+scale_y_continuous(limits = c(-0.1, 0.5)) +
+ylab("") + xlab("")+scale_x_continuous(limits = c(15, 35))+
+theme_bw()  + theme(
+	text = element_text(size=16),
+	panel.border = element_blank(), axis.line =element_blank(), axis.text.x = element_blank(),
+											axis.ticks = element_blank(), 
+											axis.text.y = element_blank(),
+	legend.position = "none"
+	)
+p5
+
+p6 = ggplot()+
+geom_histogram(data=mid1, aes(y=mi2, x=(..count..)/sum(..count..), fill = c_use[2] ), color="black") +
+scale_fill_manual(values=c_use[2])+ 
+scale_x_continuous(limits = c(-0.1, 0.5)) +
+ylab("") + xlab("")+scale_y_continuous(limits = c(15, 35))+
+theme_bw()  + theme(
+	text = element_text(size=16),panel.border = element_blank(),
+											axis.line =element_blank(), axis.text.x = element_blank(), 
+											axis.text.y = element_blank(),
+											axis.ticks = element_blank(), 
+	legend.position = "none"
+	)
+p6
+
+
+p7 = ggplot()+geom_contour_filled(data = kh1u, aes(x=x,y=y,z = z ))+
+scale_x_continuous(limits = c(15, 35))+
+scale_y_continuous(limits = c(15, 35))+
+ylab("Temperature 2") + xlab("Temperature 1")+
+theme_bw()  + theme(
+	text = element_text(size=16),
+	legend.position = "none"
+	)
+p7
+
+
+g3a =grid.arrange( arrangeGrob(p5, ncol=2, nrow=1, 
+											widths=c( unit(0.5, "npc"), unit(0.15, "npc") ) ),	
+									arrangeGrob(p7, p6, ncol=2, nrow=1,
+											widths=c( unit(0.5, "npc"), unit(0.15, "npc") )  ), 		
+									heights=c(  unit(0.25, "npc"),unit(0.5, "npc") )
+				)
+
+
+#These three are all for the second plot: 
+p8 = ggplot()+
+geom_histogram(data=mid2, aes(x=mi1, y=(..count..)/sum(..count..), fill = c_use[1] ), color="black") +
+scale_fill_manual(values=c_use[1])+ 
+scale_y_continuous(limits = c(-0.1, 0.5)) +
+ylab("") + xlab("")+scale_x_continuous(limits = c(15, 35))+
+theme_bw()  + theme(
+	text = element_text(size=16),
+	panel.border = element_blank(), axis.line =element_blank(), axis.text.x = element_blank(),
+											axis.ticks = element_blank(), 
+											axis.text.y = element_blank(),
+	legend.position = "none"
+	)
+p8
+
+p9 = ggplot()+
+geom_histogram(data=mid2, aes(y=mi2, x=(..count..)/sum(..count..), fill = c_use[2] ), color="black") +
+scale_fill_manual(values=c_use[2])+ 
+scale_x_continuous(limits = c(-0.1, 0.5)) +
+ylab("") + xlab("")+scale_y_continuous(limits = c(15, 35))+
+theme_bw()  + theme(
+	text = element_text(size=16),panel.border = element_blank(),
+											axis.line =element_blank(), axis.text.x = element_blank(), 
+											axis.text.y = element_blank(),
+											axis.ticks = element_blank(), 
+	legend.position = "none"
+	)
+p9
+
+
+p10 = ggplot()+geom_contour_filled(data = kh2u, aes(x=x,y=y,z = z ))+
+scale_x_continuous(limits = c(15, 35))+
+scale_y_continuous(limits = c(15, 35))+
+ylab("Temperature 2") + xlab("Temperature 1")+
+theme_bw()  + theme(
+	text = element_text(size=16),
+	legend.position = "none"
+	)
+p10
+
+g3b =grid.arrange( arrangeGrob(p8, ncol=2, nrow=1, 
+											widths=c( unit(0.5, "npc"), unit(0.15, "npc") ) ),	
+									arrangeGrob(p10, p9, ncol=2, nrow=1,
+											widths=c( unit(0.5, "npc"), unit(0.15, "npc") )  ), 		
+									heights=c(  unit(0.25, "npc"),unit(0.5, "npc") )
+				)
+
+g3 = grid.arrange(g3a,g3b, ncol = 2)
+
+ggsave(file="figure1_HE.pdf",g1)
+ggsave(file="figure1_KLD.pdf",g2)
+ggsave(file="figure1_MIa.pdf",g3a)
+ggsave(file="figure1_MIb.pdf",g3b)
 
 
 #=============================================================================
