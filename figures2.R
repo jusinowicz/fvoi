@@ -222,8 +222,8 @@ h2 = shannon_D(hh2$counts/sum(hh2$counts))
 he2 = paste( "H(E)=", round(h2,2))
 
 
-p0=ggplot()+geom_histogram(data=er1,aes(x=fr1,y=(..count..)/sum(..count..)),color="black",fill="white")+
-ylab("Frequency")+ xlab("Temperature")+scale_x_continuous(limits = c(0, 35)) + 
+p0=ggplot()+geom_histogram(data=er1,aes(x=fr1,y=(..count..)/sum(..count..)),color="black",fill=c_use[1],alpha=0.4)+
+ylab("Frequency")+ xlab("")+scale_x_continuous(limits = c(0, 35)) + 
 scale_y_continuous(limits = c(0, 0.5)) +
 theme_bw() + geom_text( aes(x = xpos2, y = ypos2, label = he1,size=20) ) + theme(
 	text = element_text(size=16),
@@ -234,7 +234,7 @@ theme_bw() + geom_text( aes(x = xpos2, y = ypos2, label = he1,size=20) ) + theme
 p0
 
 
-p1=ggplot()+geom_histogram(data=er1, aes(x=fr2,y=(..count..)/sum(..count..)),color="black",fill="white")+
+p1=ggplot()+geom_histogram(data=er1, aes(x=fr2,y=(..count..)/sum(..count..)),color="black",fill=c_use[1],alpha=0.4)+
 ylab("")+ xlab("Temperature")+scale_x_continuous(limits = c(0, 35))+
 scale_y_continuous(limits = c(0, 0.5)) +
 theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = he2,size=20) )  + theme(
@@ -245,7 +245,7 @@ theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = he2,size=20) )  + theme
 	)
 p1
 
-g1=grid.arrange( arrangeGrob(ncol=2, nrow = 1, p0,p1) ) 
+g1=grid.arrange( arrangeGrob(ncol=1, nrow = 2 ,p0,p1) ) 
 
 
 #Data for general KL divergence figure 
@@ -256,30 +256,41 @@ er2bL = gather(er2b, fr)
 
 c_use = c("#440154FF","#35B779FF" )
 
-xpos2 = c(8)
+xpos2 = c(16)
 ypos2 = c(0.3)
 
 #Use the breaks from last part to make this meaningful:
-hk1 = hist(er2a$fr1,breaks = hh1$breaks)
-hk2 = hist(er2a$fr2, breaks = hh1$breaks)
+# hk1 = hist(er2a$fr1,breaks = hh1$breaks)
+# hk2 = hist(er2a$fr2, breaks = hh1$breaks)
+
+hk1a = c(er2b$fr1, er2b$fr2 )  
+hk1b = hist(hk1a,breaks=30) 
+
+hk1 = hist(er2a$fr1,breaks = hk1b$breaks)
+hk2 = hist(er2a$fr2, breaks = hk1b$breaks)
+
 p1 = hk1$counts/sum(hk1$counts) + 1/30
 p1 = p1/sum(p1)
 p2 = hk2$counts/sum(hk2$counts) + 1/30
 p2 = p2/sum(p2)
 kdif1 = p1*log(p1/p2)
 kdif1[!(is.finite(kdif1))] = 0 
-n1= data.frame(d1 = c(0,kdif1), y = hh1$breaks)
+n1= data.frame(d1 = c(0,kdif1), y = hk1$breaks)
 
 
-hk1 = hist(er2b$fr1,breaks = hh1$breaks)
-hk2 = hist(er2b$fr2, breaks = hh1$breaks )
+# hk1 = hist(er2b$fr1,breaks = hh1$breaks)
+# hk2 = hist(er2b$fr2, breaks = hh1$breaks )
+
+hk1 = hist(er2b$fr1,breaks = hk1b$breaks)
+hk2 = hist(er2b$fr2, breaks = hk1b$breaks )
+
 p1 = hk1$counts/sum(hk1$counts) + 1/30
 p1 = p1/sum(p1)
 p2 = hk2$counts/sum(hk2$counts) + 1/30
 p2 = p2/sum(p2)
 kdif2 = p1*log(p1/p2)
 #kdif2[!(is.finite(kdif2))] = 0 
-n2 = data.frame(d1 = c(0,kdif2), y = hh1$breaks)
+n2 = data.frame(d1 = c(0,kdif2), y = hk1$breaks)
 
 
 k1 = sum(kdif1)
@@ -288,12 +299,19 @@ kd1 = paste( "KLD =", round(k1,2))
 k2 = sum(kdif2)
 kd2 = paste( "KLD =", round(k2,2))
 
+#Just make a prettier smoothed version for plot: 
+spline_int1 = as.data.frame(spline(n1$y, n1$d1))
+spline_int2 = as.data.frame(spline(n2$y, n2$d1))
+
+
 p3 = ggplot()+
-geom_bar(data=n1, aes(x = y, y = d1), stat="identity"  ) +
+# geom_ribbon(data=n1, aes(x=y, ymin = 0, ymax = d1), stat="identity"  ) +
+geom_bar(data = n1, aes(x=y, y =d1),stat="identity",alpha=0.5 )+
+#geom_ribbon(data=spline_int1, aes(x=x, ymin=0, ymax=y), stat="identity",alpha=0.4 ) +
 geom_histogram(data=er2aL, aes(x=value, y=(..count..)/sum(..count..), fill = fr ),alpha=0.4, color="black") +
 scale_fill_manual(values=c_use)+ 
 scale_y_continuous(limits = c(-0.1, 0.5)) +
-ylab("Frequency, Divergence (nats) ") + xlab("Temperature")+scale_x_continuous(limits = c(0, 35)) +
+ylab("Frequency, Divergence (nats) ") + xlab("")+scale_x_continuous(limits = c(15, 30)) +
 theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = kd1,size=20) )  + theme(
 	text = element_text(size=16),
 	panel.border = element_blank(), panel.grid.major = element_blank(),
@@ -304,11 +322,13 @@ p3
 
 
 p4 = ggplot()+
-geom_bar(data=n2, aes(x = y, y = d1), stat="identity"  ) +
+#geom_ribbon(data=spline_int2, aes(x=x, ymin=0, ymax=y), stat="identity",alpha=0.4 ) +
+#geom_line(data=spline_int2, aes(x=x, y=y), stat="identity",size=1  ) +
+geom_bar(data = n2, aes(x=y, y =d1),stat="identity",alpha=0.5)+
 geom_histogram(data=er2bL, aes(x=value, y=(..count..)/sum(..count..), fill = fr ),alpha=0.4,, color="black") +
 scale_fill_manual(values=c_use)+ 
 scale_y_continuous(limits = c(-0.1, 0.5)) +
-ylab("") + xlab("Temperature")+scale_x_continuous(limits = c(0, 35))+
+ylab("") + xlab("Temperature")+scale_x_continuous(limits = c(15, 30))+
 theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = kd2,size=20) )  + theme(
 	text = element_text(size=16),
 	panel.border = element_blank(), panel.grid.major = element_blank(),
@@ -317,7 +337,7 @@ theme_bw()+ geom_text( aes(x = xpos2, y = ypos2, label = kd2,size=20) )  + theme
 	)
 p4
 
-g2=grid.arrange( arrangeGrob(ncol=2, nrow = 1, p3,p4) ) 
+g2=grid.arrange( arrangeGrob(ncol=1, nrow = 2, p3,p4) ) 
 
 
 
@@ -448,8 +468,8 @@ g3b =grid.arrange( arrangeGrob(p8, ncol=2, nrow=1,
 
 g3 = grid.arrange(g3a,g3b, ncol = 2)
 
-ggsave(file="figure1_HE.pdf",g1)
-ggsave(file="figure1_KLD.pdf",g2)
+ggsave(file="figure1_HE1.pdf",g1)
+ggsave(file="figure1_KLD1.pdf",g2)
 ggsave(file="figure1_MIa.pdf",g3a)
 ggsave(file="figure1_MIb.pdf",g3b)
 
