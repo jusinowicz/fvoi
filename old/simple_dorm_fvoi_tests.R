@@ -402,7 +402,7 @@ rc_df = data.frame ( r = rho_i[1:ngens,1],
 gc_df = data.frame ( g = ds_i$gs[1:ngens], 
 	c = env_sensed[1:ngens,1])
 
-r_and_c = prop.table(table( rc_df ))  #Joint prob between env and cue 
+r_and_c = prop.table(table( gc_df ))  #Joint prob between env and cue 
 
 #We want the rows of r_and_c to match the order of the environments/cues. 
 #This is essential for comparing the distributions via KLD. This can be

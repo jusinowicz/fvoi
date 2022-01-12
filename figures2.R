@@ -372,7 +372,7 @@ kh2u = data.frame(xy2, z = c(kh2$z))
 
 #These three are all for the first plot: 
 p5 = ggplot()+
-geom_histogram(data=mid1, aes(x=mi1, y=(..count..)/sum(..count..), fill = c_use[1] ), color="black") +
+geom_histogram(data=mid1, aes(x=mi1, y=(..count..)/sum(..count..), fill = c_use[1] ), color="black", alpha=0.4) +
 scale_fill_manual(values=c_use[1])+ 
 scale_y_continuous(limits = c(-0.1, 0.5)) +
 ylab("") + xlab("")+scale_x_continuous(limits = c(15, 35))+
@@ -386,7 +386,7 @@ theme_bw()  + theme(
 p5
 
 p6 = ggplot()+
-geom_histogram(data=mid1, aes(y=mi2, x=(..count..)/sum(..count..), fill = c_use[2] ), color="black") +
+geom_histogram(data=mid1, aes(y=mi2, x=(..count..)/sum(..count..), fill = c_use[2] ), color="black",alpha=0.4) +
 scale_fill_manual(values=c_use[2])+ 
 scale_x_continuous(limits = c(-0.1, 0.5)) +
 ylab("") + xlab("")+scale_y_continuous(limits = c(15, 35))+
