@@ -161,7 +161,7 @@ fs = matrix(0,num_states,nspp)
 # 	method=fm_method )}
 
 mstates=floor(num_states/2)
-fs = get_species_fit_pois(mstates, num_states, nspp,fm )
+fs = get_species_fit_pois(mstates, num_states, nspp,fm )*3
 
 ####Germination fraction
 #With gs_cor = 1, the germination fraction is optimal, i.e. fractions 
@@ -192,8 +192,9 @@ for (t in 1:tsize){
 	fr_opt[t,] = apply(fit_tmp$sp_fit,2,max)
 	# fr_opt[t,,] = fit_tmp$sp_fit
 }
-	
-gs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 
+
+gs_o =  matrix( c(get_single_opt_CT( fr=fs, ep=env_prob, nspp=nspp, sr = sr )$b0),num_states,nspp,byrow=T) #Optimal 	
+#gs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 
 #gs_io = matrix(c(get_multi_opt(fr=fr_opt, gs=gs nspp=nspp, sr = sr ) ),num_states,nspp,byrow=T )
 
 ####Conditional germination fraction i.e. germination with information

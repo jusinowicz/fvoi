@@ -311,6 +311,82 @@ get_single_opt= function ( fr, nspp, sr, gw =NULL, incr=0.01) {
 }
 
 #=============================================================================
+#Numerically solve optimal germination strategies for the single-species,
+#dormancy model: 
+#	Ni[t+1] = Ni[t]( (1-g_i)*s_i + g_i * f_i )
+#
+#This procedure follows the solution from Cover and Thomas, Section 6 problem 2
+#based on a combination of Tucker-Kuhn conditions and a "water filling" algorithm
+#
+#	Ni 			The population vectors (matrix) from the main code
+#	env			The vector of environmental states, length must match dim[1] 
+#				of Ni. 
+#	sr 			Species survival rates, size needs to match dim[2] of Ni.  
+#   gw 			An optional weight on the germination rate. This is used to 
+#				get the multi-strategy optimum with get_multi_opt
+#=============================================================================
+
+get_single_opt_CT= function ( fr, ep, nspp, sr, gw =NULL, incr=0.01) {
+	
+	nenv = dim(fr)[1]
+	nspp = dim(fr)[2]
+	#if(is.null(gw)) {gw = c(matrix(1,nspp,1))}
+
+	env_fit = NULL
+	env_fit$sr =sr
+	env_fit$fr = fr
+	env_fit$ep = ep
+
+	#The output: optimal germination rate (b0) and optimal probabilities (bi)
+	opts = NULL
+	opts$b0 = matrix(0,nspp,1)
+	opts$bi = matrix(0,nenv, nspp)
+
+for(f in 1:nspp){
+		#Order the vector of probability * payout.
+		po = (env_fit$fr[,f])*env_fit$ep
+		po_i = po[order(po,decreasing=T) ]
+		fr_i = fr[,f][order(po,decreasing=T) ]
+		#fr_i[fr_i<1] = 0
+		ep_i = ep[order(po,decreasing=T) ]
+
+
+		#Define this metric: 
+		Ck = matrix(0,nenv,1)
+		C2 = matrix(0,nenv,1)
+		for (n in 1:nenv){
+			Ck[n] = (1-sum(ep_i[1:n]) )/(1-sum(1/fr_i[1:n]) )
+			C2[n] = sum(1/(fr_i[1:n])) + (1-(sum(ep_i[1:n])) )/ Ck [n] 
+		}
+		#Ck[Ck<0] = 0
+
+		#Find this cutoff point. This is a comparison between po_i and Ck. 
+		#Find the smallest k for which p_(k+1)*o_(p+1) <= Ck
+		tc1 = unname( which (po_i <= Ck[1:nenv]) )
+		tc = min(tc1)-1
+
+		#This is the optimal amount to retain:
+		b0 = Ck[tc]
+	
+		#These are the optimal proportions to bet: 
+		bi=  ep_i - b0/fr_i
+		bi[(tc+1):nenv] = 0
+
+		if(tc <1 ) {tc =1; b0=1; bi[1] =0} #This means no betting/germination should happen.
+
+		# sum(ep_i/(b0+bi*fr_i),na.rm=T)
+		# sum(ep_i[(tc+1):nenv]/(b0+bi[(tc+1):nenv]*fr_i[(tc+1):nenv]),na.rm=T)
+		# sum(ep_i[(tc+1):nenv]/(1+bi[(tc+1):nenv]*fr_i[(tc+1):nenv]),na.rm=T)
+
+		opts$b0[f] = b0
+		opts$bi[,f] = bi
+	}
+	
+	return(opts)
+
+}
+
+#=============================================================================
 #Numerically solve optimal germination strategies for  single-species
 #dormancy model when there are multiple germination strategies. This just 
 #applies the single : 
