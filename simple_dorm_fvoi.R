@@ -1,6 +1,6 @@
 #=============================================================================
 # R code to measure the fitness value of information for a simple model of 
-# germination and dormancy from Cohen 1967, e.g. Ellner 1997. This builds
+# germination and dormancy adapted from e.g. Cohen 1967, Ellner 1997. This builds
 # from the basic example of Kelly betting on horses (where horses = environments
 # in the ecological example)
 #
@@ -9,25 +9,31 @@
 # how well the germinating seeds have predicted their environment. The optimal
 # strategy is to germinate a proportion of seeds that matches on to the 
 # probability of sucessful reproduction. Unlike in pure Kelly betting, the 
-# population retains a proportion of its "wealth" (population) as a seed bank.
+# population retains a proportion of its "wealth" (population) as a seed bank. 
 #
 # The population dynamics are: 
 #
-# 	Ni[t+1] = Ni[t]( (1-g_i)*s_i + g_i * f_i )
+# 	Ni[t+1] = Gi[t]*Ni[t]
+#
+#     Gi[t] = (1-g_i)*s_i + g_i *sum(q_e* f_e)
 #	
-# Where g_i is the germination rate (this is b_i in Cover and Thomas) and
-# f_i is the fitness (this is o_i in Cover and Thomas)
+# Where g_i is the germination rate (this is b_0 in Cover and Thomas),
+# f_e is the fitness of a type ni the environment (this is o_i in Cover and Thomas), and
+# q_e is the proportion of germinating seeds that developed each type (b_i in C and T) 
 #
-# The goal in this problem is usually to find the optimal constant value of g_i.
-# (In Kelly betting, g_i is a bet spread over multiple possible states each 
-# time step). This is typically considered G(E) in info theory studies. 
-# However, we suggest that the organism has already used information about 
-# its environment if it knows or has evolved optimal g_i. 
+# If organisms do not use information then we calculate G(E), signifying that the
+# population can only respond directly to environmental states (i.e. e in E). 
+# In this case there are still optimal g_i and q_e based on
+# the distribution of environmental states and the payouts (f_e). 
+
+# If organisms use information in the form of a cue C then we calculate G(E|C). In this 
+# case, f_e(E|C) is a conditional probability with a distribution that essentially 
+# indicates how reliable a cue C is.  
 #
-# Then G(E|C) would correspond to a variable g_i that is perfectly correlated 
-# with the environment. 
-#
-# Then the equation for FVOI is: deltaG(E;C) = G(E|C) - G(E)
+# The equation for FVOI is the difference between population growth with and 
+# without information: 
+# 
+# deltaG(E;C) = G(E|C) - G(E)
 # 
 #=============================================================================
 #=============================================================================
@@ -80,10 +86,10 @@ sp_act = matrix(1, ngens+1,nspp) #Realized environments from sim
 
 
 #array( matrix(1, ngens+1,nspp), dim = c(ngens+1,num_states,nspp) ) #Realized fitness from sim
-gi_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
-go_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
-gnoi_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
-gnoi_fit2 = matrix(1, ngens+1,nspp) #Realized fitness from sim
+qi_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
+qo_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
+qnoi_fit = matrix(1, ngens+1,nspp) #Realized fitness from sim
+qnoi_fit2 = matrix(1, ngens+1,nspp) #Realized fitness from sim
 
 
 #=============================================================================
@@ -161,22 +167,26 @@ fs = matrix(0,num_states,nspp)
 # 	method=fm_method )}
 
 mstates=floor(num_states/2)
-fs = get_species_fit_pois(mstates, num_states, nspp,fm )*3
+fs = get_species_fit_pois(mstates, num_states, nspp,fm )*100
 
 ####Germination fraction
+
+
+####Phenotype fraction
+
 #With gs_cor = 1, the germination fraction is optimal, i.e. fractions 
 #match the probability of a state occurring. Decreasing this 
 #simulates increasingly poor or mismatched information. cor = 0 
 #is no information. 
-gs_cor = 0.9999
-gs_cor_no = 0
-gc = matrix(0.5,nspp,1) #For a constant germination fraction -- matches dormancy model
-gs_noi = matrix(0,num_states,nspp) #No info
-gs_o = matrix(0,num_states,nspp) #Optimal betting (i.e. proportionate)
-gf_method = "variable"
+qs_cor = 0.9999
+qs_cor_no = 0
+qc = matrix(0.5,nspp,1) #For a constant germination fraction -- matches dormancy model
+qs_noi = matrix(0,num_states,nspp) #No info
+qs_o = matrix(0,num_states,nspp) #Optimal betting (i.e. proportionate)
+qs_method = "variable"
 
 for (s in 1:nspp) { 
-	gs_noi[,s] = get_species_fraction(probs = env_prob, gcor = gs_cor, gc = gc[s], 
+	qs_noi[,s] = get_species_fraction(probs = env_prob, gcor = qs_cor, gc = qc[s], 
 	method="constant" )
 }
 
@@ -193,33 +203,34 @@ for (t in 1:tsize){
 	# fr_opt[t,,] = fit_tmp$sp_fit
 }
 
-gs_o =  matrix( c(get_single_opt_CT( fr=fs, ep=env_prob, nspp=nspp, sr = sr )$b0),num_states,nspp,byrow=T) #Optimal 	
-#gs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 
-#gs_io = matrix(c(get_multi_opt(fr=fr_opt, gs=gs nspp=nspp, sr = sr ) ),num_states,nspp,byrow=T )
+gs_o =  matrix( c( matrix(get_single_opt_CT( fr=fs, ep=env_prob, nspp=nspp, sr = sr )$b0,1,2) ),ngens,nspp,byrow=T) #Optimal 	
+#qs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 
+#qs_io = matrix(c(get_multi_opt(fr=fr_opt, gs=gs nspp=nspp, sr = sr ) ),num_states,nspp,byrow=T )
 
 ####Conditional germination fraction i.e. germination with information
 #This function creates a table of conditional probabilities based on the
 #G(E|C). Needs acc, which is a number between 0 and 1 describing how accurate
 #the cue is on average (1 is perfect accuracy, 0 is none)
-gec = get_cp(env_states, acc=c(1,1) )
+qec = get_cp(env_states, acc=c(1,1) )
 
 #Make G(C|E) from G(E|C) to simulate population dynamics later:
-gj = gec 
-gce = gec
+qj = qec 
+qce = qec
 for(s in 1:nspp){
 	#Joint probability distribution G(E,C) = G(C,E) = G(E|C) * G(C)
-	gj[,,s] = gec[,,s]*matrix(env_states, num_states,num_states,byrow=T ) 
+	qj[,,s] = qec[,,s]*matrix(env_states, num_states,num_states,byrow=T ) 
 	
 	####For 0 MI, scramble to Cue: 
-	#gj[,,s] = matrix(runif(num_states^2), num_states,num_states,byrow=T ) 
+	#qj[,,s] = matrix(runif(num_states^2), num_states,num_states,byrow=T ) 
 	
-	#G(C|E) = G(C,E)/G(E)
-	gce[,,s] = gj[,,s]/matrix(rowSums(gj[,,s]),num_states,num_states)
-	gce[,,s][!is.finite(gce[,,s])] = 0
+	#qi(C|E) = qi(C,E)/G(E)
+	qce[,,s] = qj[,,s]/matrix(rowSums(qj[,,s]),num_states,num_states)
+	qce[,,s][!is.finite(qce[,,s])] = 0
 }
 
 ###########
 #This is key somehow:
+gec = qec
 incr=0.01
 H1 = seq(0.01,.99,incr)
 a1=sr[1]*(1-matrix(H1,length(H1),num_states))+kronecker(H1,t(fs[,1]))
@@ -238,8 +249,8 @@ g_in_e2[,,2] =gec[,,2] * matrix( apply(a2[,,2],2,max) >=1, num_states, num_state
 ###########
 
 #Use this for the runif samples: 
-gs = cbind(env_states,env_states)	
-gs_noi_tmp = seq(0,0.99,1/(length(gs)-1) )
+qs = cbind(env_states,env_states)	
+qs_noi_tmp = seq(0,0.99,1/(length(qs)-1) )
 
 #=============================================================================
 #Population dynamics
@@ -251,24 +262,23 @@ for (t in 1:ngens){
 	sp_fit_o[t,] = fs[(env_act[t]+1), ]
 
 	#No information, v1: totally random
-	#rho_noi[t+1, ] = ( sr*(1-gs_noi[c(which_env)])   + sp_fit * gs_noi[c(which_env)]  ) 
-	gs_noi = runif(nspp)
-	#gs_noi = sample(gs_noi_tmp,nspp,replace=T)
-	gs_noi = c(1/num_states, 1/num_states)
-	gnoi_fit[t,] = gs_noi 
-	rho_noi[t, ] = ( sr*(1-gnoi_fit[t,])   + sp_fit_o[t,]  * gnoi_fit[t,] ) 
+	qs_noi = runif(nspp)
+	qs_noi = c(1/num_states, 1/num_states)
+	qnoi_fit[t,] = qs_noi 
+	rho_noi[t, ] = ( sr*(1-gs_o[t,])   + gs_o[t,]*sp_fit_o[t,]  * qnoi_fit[t,] ) 
 	N_noi[t+1,] = N_noi[t, ] * rho_noi[t, ] 
 	N_noi[t+1,][N_noi[t+1,]<0] = 0
 
 	#No information, v2: random sampling from "observed" germination rates
-	gs_noi2 = apply(gs,2, sample)    
-	gnoi_fit2[t,] = gs_noi2[1,] 
-	rho_noi2[t, ] = ( sr*(1-gnoi_fit2[t,])   + sp_fit_o[t,]  * gnoi_fit2[t,] ) 
+	qs_noi2 = apply(qs,2, sample)    
+	qnoi_fit2[t,] = qs_noi2[1,] 
+	rho_noi2[t, ] = ( sr*(1-gs_o[t,])   + gs_o[t,] * sp_fit_o[t,]  * qnoi_fit2[t,] ) 
 	N_noi2[t+1,] = N_noi2[t, ] * rho_noi2[t, ] 
 	N_noi2[t+1,][N_noi2[t+1,]<0] = 0
 	
-	#Optimal constant betting
-	rho_o[t, ] = ( sr*(1-gs_o[(env_act[t]+1),] )   + sp_fit_o[t,] * gs_o[(env_act[t]+1),]  ) 
+	#Optimal proportionate betting
+	qs_o = env_prob [(env_act[t]+1)]
+	rho_o[t, ] = ( sr*(1- gs_o[t,] )   + gs_o[t,]*sp_fit_o[t,] * qs_o ) 
 	No[t+1,] = No[t, ] * rho_o[t, ] 
 	No[t+1,][No[t+1,]<0] = 0
 
@@ -276,7 +286,7 @@ for (t in 1:ngens){
 	#The environment that species sensed (i.e. the cue they got), based on G(C|E)
 	sp_fit_tmp = matrix((0:(num_states-1)),num_states,nspp)
 	for( s in 1:nspp){ 
-		env_sensed[t,s] = sample(x=(0:(num_states-1)), size=1, prob =gce[ (env_act[t]+1),,s], replace=T)
+		env_sensed[t,s] = sample(x=(0:(num_states-1)), size=1, prob =qce[ (env_act[t]+1),,s], replace=T)
 		ec = env_sensed[t,s]
 		sp_fit_tmp[,s][sp_fit_tmp[,s]!=ec] = -1 #Identify losers
 		sp_fit_tmp[,s][sp_fit_tmp[,s]==ec] = fs[,s][sp_fit_tmp[,s]==ec] #Set winning state to its payout
@@ -286,22 +296,22 @@ for (t in 1:ngens){
 	#This version is the most similar to the kelly betting example, but does not 
 	#make a lot of ecological sense. In particular, it never makes sense to bet
 	#everything on a really crappy year under conditions of sub-fair odds. 
-	rho_i1[t, ] = ( sr*(1-gec[(env_act[t]+1) , , ][ (env_sensed[t,]+1) ] )   + 
-				sp_fit_i[t,] * gec[(env_act[t]+1) , , ][ (env_sensed[t,]+1) ]  )
+	rho_i1[t, ] = ( sr*(1-gs_o[t,] )   + 
+				gs_o[t,]*sp_fit_i[t,] * qec[(env_act[t]+1) , , ][ (env_sensed[t,]+1) ]  )
 
 	# #This version uses the germination rate that matches the sensed environment
-	rho_i2[t, ] = ( sr*(1-gs[(env_sensed[t,]+1)] )   + 
-	  			sp_fit_i[t,] * gs[(env_sensed[t,]+1)] )
+	rho_i2[t, ] = ( sr*(1-gs_o[t,] )   + 
+	  			gs_o[t,]*sp_fit_i[t,] * qs[(env_sensed[t,]+1)] )
 
 	# #This version uses the germination rate that matches the sensed environment
 	# #and assumes that species are selective as to what conditions they germinate
-	rho_i3[t, ] = ( sr*(1- g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ] )   + 
-	  			sp_fit_i[t,] * g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ] )
-	gt_e2[t, ] =  g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ]
+	# rho_i3[t, ] = ( sr*(1- gs_o[t,] )   + 
+	#   			gs_o[t,]*sp_fit_i[t,] * q_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ] )
+	# gt_e2[t, ] =  g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ]
 
 	#This version uses the ideal (max) germination rate that matches the sensed environment
-	rho_i4[t, ] = ( sr*(1-g_in_e[(env_sensed[t,]+1)] )   + 
-	  			sp_fit_i[t,] * g_in_e[(env_sensed[t,]+1)] )
+	# rho_i4[t, ] = ( sr*(1-gs_o[t,] )   + 
+	#   			gs_o[t,]*sp_fit_i[t,] * q_in_e[(env_sensed[t,]+1)] )
 
 	Ni1[t+1,] = Ni1[t, ] * rho_i1[t, ] 
 	Ni1[t+1,][Ni1[t+1,]<0] = 0
@@ -328,7 +338,7 @@ lines(log(Ni3[,1]),col="green")
 lines(log(Ni4[,1]),col="yellow")
 
 #Theoretical prediction based on optimal germination/betting strategy (gs)
-lines(log(2^(nn*sum(env_prob*log2(gs[,1]*fs[,1])))),col="red",lty=4)
+lines(log(2^(nn*sum(env_prob*log2(qs[,1]*fs[,1])))),col="red",lty=4)
 #Theoretical prediction when optimal germination matches actual probs
 Wbp = log2(env_prob*fs[,1])
 Wbp[!is.finite(Wbp)] = 0
@@ -336,9 +346,9 @@ lines(log(2^(nn*sum(env_prob*Wbp))),col="blue" )
 
 #The theoretical population growth rate:
 #log-Rate: 
-lGr = colSums(matrix(env_prob,num_states,nspp)*log(gs*fs))
+lGr = colSums(matrix(env_prob,num_states,nspp)*log(qs*fs))
 #Rate:
-Gr = apply( (gs*fs)^matrix(env_prob,num_states,nspp),2,prod)
+Gr = apply( (qs*fs)^matrix(env_prob,num_states,nspp),2,prod)
 
 
 ####The mutual information between the cue and the environment: 
@@ -361,14 +371,14 @@ mI = sE - sCgivenE
 #####Divergences: 
 #Make some data sets:
 breaks = dim(c_and_e)[1]
-rho_i[ngens+1,] = rho_i[ngens,]
+rho_i1[ngens+1,] = rho_i1[ngens,]
 rho_noi[ngens+1,] = rho_noi[ngens,]
-rho_i = log(rho_i4)
+rho_i = log(rho_i1)
 r_noi = log(rho_noi)
 
 #Make these data sets to mimic actual sampling: 
-ds_noi = data.frame(gs = gnoi_fit[,1], envr = sp_fit_o[,1], rho = rho_noi[,1]  )
-ds_i = data.frame(gs = g_in_e[ (env_sensed[,1]+1) ], envr = sp_fit_i[,1], rho = rho_i [,1])
+ds_noi = data.frame(qs = qnoi_fit[,1], envr = sp_fit_o[,1], rho = rho_noi[,1]  )
+ds_i = data.frame(qs = qs[ (env_sensed[,1]+1) ], envr = sp_fit_i[,1], rho = rho_i [,1])
 
 #Probability distribution of growth rates with info
 b_use_i = seq(min(c(r_noi,rho_i),na.rm=T),max(c(r_noi,rho_i),na.rm=T), length.out=(breaks+1) )
@@ -467,13 +477,13 @@ for( s in 1:length(mar_c) ){
 }
 
 #This should be the equivalent of rho_noi 
-sum(env_prob[1:9]*log( sr[1]*(1-mar_noir)   + fs[1:9,1]  * mar_noir ) )  
+sum(env_prob[1:9]*log( sr[1]*(1-gs_o[1])   + gs_o[1]*fs[1:9,1]  * mar_noir ) )  
 
-f1 = ( sr[1]*(1-g_in_e)   + fs[,1]  * g_in_e ) /g_in_e 
-f2 = (sr[1]*(1-mar_noir)   + fs[1:9,1]  * mar_noir)/mar_noir   
+f1 = ( sr[1]*(1-gs_o[1])   + gs_o[1]*fs[,1]  * (qs[,1]+0.0001)) /(qs[,1]+0.0001)
+f2 = (sr[1]*(1-gs_o[1])   + gs_o[1]*fs[1:9,1]  * mar_noir)/mar_noir   
 gp2 = sum(env_prob[1:9]*log(f2)) #This is actually the max achievable gr
 gp1 = sum( env_prob*log(f1 ))
-gp1 = sum(env_prob*log( sr*(1-g_in_e)   + fs[,1]  * g_in_e ) ) #Maximum achievable gr 
+gp1 = sum(env_prob*log( sr*(1-gs_o[1])   + gs_o[1]*fs[,1]  * g_in_e ) ) #Maximum achievable gr 
 gp1 = (env_prob*log( sr[1]*(1-g_in_e2)   + fs[,1]  * g_in_e2 ) ) #Maximum achievable gr 
 rnoi_I = gp1-sE-klr 
 
