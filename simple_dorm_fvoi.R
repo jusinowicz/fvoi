@@ -55,6 +55,9 @@ nspp = 2
 #Survival rates: 
 sr = c(0.8,0.8)
 
+#Constant germination rate:
+gsu = 0.75
+
 #=============================================================================
 #Stored values, i.e. population dynamics, information metrics
 #=============================================================================
@@ -167,7 +170,7 @@ fs = matrix(0,num_states,nspp)
 # 	method=fm_method )}
 
 mstates=floor(num_states/2)
-fs = get_species_fit_pois(mstates, num_states, nspp,fm )*100
+fs = get_species_fit_pois(mstates, num_states, nspp,fm )*30
 
 ####Germination fraction
 
@@ -203,7 +206,9 @@ for (t in 1:tsize){
 	# fr_opt[t,,] = fit_tmp$sp_fit
 }
 
-gs_o =  matrix( c( matrix(get_single_opt_CT( fr=fs, ep=env_prob, nspp=nspp, sr = sr )$b0,1,2) ),ngens,nspp,byrow=T) #Optimal 	
+gst = get_single_opt_CT( fr=fs, ep=env_prob, nspp=nspp, sr = sr ) #Optimal 
+gst$b0[gst$b0<=0] = gsu
+gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
 #qs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 
 #qs_io = matrix(c(get_multi_opt(fr=fr_opt, gs=gs nspp=nspp, sr = sr ) ),num_states,nspp,byrow=T )
 
@@ -479,12 +484,12 @@ for( s in 1:length(mar_c) ){
 #This should be the equivalent of rho_noi 
 sum(env_prob[1:9]*log( sr[1]*(1-gs_o[1])   + gs_o[1]*fs[1:9,1]  * mar_noir ) )  
 
-f1 = ( sr[1]*(1-gs_o[1])   + gs_o[1]*fs[,1]  * (qs[,1]+0.0001)) /(qs[,1]+0.0001)
+f1 = ( sr[1]*(1-gs_o[1])   + gs_o[1]*fs[,1]  * (qs[,1]+1)) /(qs[,1]+1)
 f2 = (sr[1]*(1-gs_o[1])   + gs_o[1]*fs[1:9,1]  * mar_noir)/mar_noir   
 gp2 = sum(env_prob[1:9]*log(f2)) #This is actually the max achievable gr
 gp1 = sum( env_prob*log(f1 ))
-gp1 = sum(env_prob*log( sr*(1-gs_o[1])   + gs_o[1]*fs[,1]  * g_in_e ) ) #Maximum achievable gr 
-gp1 = (env_prob*log( sr[1]*(1-g_in_e2)   + fs[,1]  * g_in_e2 ) ) #Maximum achievable gr 
+gp1 = sum(env_prob*log( sr*(1-gs_o[1])   + gs_o[1]*fs[,1]  *(qs[,1]+1) ) ) #Maximum achievable gr 
+#gp1 = (env_prob*log( sr[1]*(1-g_in_e2)   + fs[,1]  * g_in_e2 ) ) #Maximum achievable gr 
 rnoi_I = gp1-sE-klr 
 
 #This should be the equivalent of rho_i 
