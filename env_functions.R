@@ -358,11 +358,12 @@ for(f in 1:nspp){
 			Ck[n] = (1-sum(ep_i[1:n]) )/(1-sum(1/fr_i[1:n]) )
 			C2[n] = sum(1/(fr_i[1:n])) + (1-(sum(ep_i[1:n])) )/ Ck [n] 
 		}
+		Ck[!is.finite(Ck)] = 0
 		#Ck[Ck<0] = 0
 
 		#Find this cutoff point. This is a comparison between po_i and Ck. 
 		#Find the smallest k for which p_(k+1)*o_(p+1) <= Ck
-		tc1 = unname( which (po_i <= Ck[1:nenv]) )
+		tc1 = unname(which (po_i <= Ck[1:nenv]) )
 		tc = min(tc1)-1
 
 		#This is the optimal amount to retain:
@@ -705,10 +706,10 @@ return(fit_tmp)
 
 #=============================================================================
 #	Germination:	
-#	1. g_corr		define germination cue relative to fitness using a 
+#	1. g_corr		define germination/reproductive cue relative to fitness using a 
 #					correlation coefficient. g_corr = 1 is perfect prediction ,
 #					0 is no correlation, negative values would be harmful
-#	2. g_always		always germinate a fraction of seeds. 
+#	2. g_always		always germinate/reproduce a fraction of seeds. 
 #	3.				in progress
 #=============================================================================
 get_env_cue = function (env_fit, method = "g_corr" ){   
@@ -894,10 +895,10 @@ return(fit_tmp)
 
 #=============================================================================
 #	Germination:	
-#	1. g_corr		define germination cue relative to fitness using a 
+#	1. g_corr		define germination/reproduction cue relative to fitness using a 
 #					correlation coefficient. g_corr = 1 is perfect prediction ,
 #					0 is no correlation, negative values would be harmful
-#	2. g_always		always germinate a fraction of seeds. 
+#	2. g_always		always germinate/reproduce a fraction of seeds. 
 #	3.				in progress
 #=============================================================================
 get_env_cue2 = function (Ni, fr, g_corr=NULL, method = "g_corr" ){   
