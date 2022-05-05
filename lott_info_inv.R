@@ -43,6 +43,8 @@ source("./../fvoi/env_functions.R")
 #=============================================================================
 ngens = 2000 #Time steps
 nspp = 2 #Species
+gsu = 0.2 #Constant germination rate for model 
+gs_min = 0.01#For control over the germination rate, make this very small. 
 
 #=============================================================================
 #Stored values, i.e. population dynamics, information metrics
@@ -91,7 +93,7 @@ env_fit = NULL
 env_fit$Ni = Ni #Simple population dynamics
 env_fit$Ni2 = Ni #Population dynamics of residents only! 
 env_fit$Ni3 = Ni #Dormancy model (no competition)
-env_fit$opt = c(0.5,0.5) #runif(nspp)
+env_fit$opt = c(0.4,0.6) #runif(nspp)
 env_fit$var = matrix( 0.1 ,nspp,1) #A generic variance
 env_fit$min_max = NULL
 env_fit$g_mean = NULL
@@ -157,6 +159,21 @@ env_fit$fr = env_fit$fr* env_fit$lambda_r+.01
 ################################################
 
 #Annual germination rate: 
+#Germination: This is a routine to get optimal germination rates: 
+ep = hist(env_fit$env)
+env_fit$env_prob = ep$counts/sum(ep$counts)
+
+#####Comp
+b1 = seq(min(env_fit$fr[,1]), max(env_fit$fr[,1] ), length = length(ep$breaks))
+b2 = seq(min(env_fit$fr[,2]), max(env_fit$fr[,2] ), length = length(ep$breaks))
+fs1 = hist(env_fit$fr[,1], breaks = b1 )
+fs2 = hist(env_fit$fr[,2], breaks = b2 )
+env_fit$fs = cbind( fs1$mids, fs2$mids)
+gst = get_single_opt_CT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
+gst$b0[gst$b0<=0] = gsu
+gst$b0[gst$b0>=gs_min] = gsu
+gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
+
 
 #Annual intrinsic fitness
 
@@ -191,26 +208,26 @@ for (s in 1:nspp){
 	for (n in 1:ngens){
 
 		#Model 2: "Unscaled" lottery model for the residents -- without explicit competition for space
-		env_fit$Ni2[n+1, -s] = env_fit$Ni2[n,-s ]*( env_fit$sr[-s]*(1- env_fit$gr[n,-s])  + 
-							 env_fit$fr[n,-s]* env_fit$gr[n,-s]/
-						(1+sum( env_fit$fr[n,-s]*  env_fit$gr[n,-s] * env_fit$Ni2[n,-s ]) ) )
+		env_fit$Ni2[n+1, -s] = env_fit$Ni2[n,-s ]*( env_fit$sr[-s]*(1- gs_o[n,-s])  + 
+							 env_fit$fr[n,-s]*gs_o[n,-s]* env_fit$gr[n,-s]/
+						(1+sum( env_fit$fr[n,-s]* gs_o[n,-s]* env_fit$gr[n,-s] * env_fit$Ni2[n,-s ]) ) )
 
 		#IGR
-		env_fit$rho_c2[n,s] = ( ( env_fit$sr[s]*(1- env_fit$gr[n,s]) )  + 
-							(env_fit$fr[n,s]* env_fit$gr[n,s]/
-						(1+sum( env_fit$fr[n,-s]*  env_fit$gr[n,-s] * env_fit$Ni2[n,-s ]) ) ) ) 
+		env_fit$rho_c2[n,s] = ( ( env_fit$sr[s]*(1- gs_o[n,-s]) )  + 
+							(env_fit$fr[n,s]* gs_o[n,-s]*env_fit$gr[n,s]/
+						(1+sum( env_fit$fr[n,-s]* gs_o[n,-s]* env_fit$gr[n,-s] * env_fit$Ni2[n,-s ]) ) ) ) 
 
 		if (s == 1){ 
 			#Model 1: "Unscaled" lottery model for all species
-			env_fit$Ni[n+1, ] =  env_fit$Ni[n, ]*( env_fit$sr*(1- env_fit$gr[n, ])  + 
-								 env_fit$fr[n,]* env_fit$gr[n, ]/
-							(1+sum( env_fit$fr[n, ]*  env_fit$gr[n, ] * env_fit$Ni[n, ]) ) )
+			env_fit$Ni[n+1, ] =  env_fit$Ni[n, ]*( env_fit$sr*(1- gs_o[n,])  + 
+								 env_fit$fr[n,]*gs_o[n, ]* env_fit$gr[n, ]/
+							(1+sum( env_fit$fr[n, ]*gs_o[n,] * env_fit$gr[n, ] * env_fit$Ni[n, ]) ) )
 		}
 
 
 		#Model 3: Single species
-		env_fit$rho_c3[n,s ] = ( ( env_fit$sr[s]*(1- env_fit$gr[n,s]) )  + 
-							env_fit$fr[n,s] * env_fit$gr[n,s] ) 
+		env_fit$rho_c3[n,s ] = ( ( env_fit$sr[s]*(1- gs_o[n,s]) )  + 
+							env_fit$fr[n,s] *gs_o[n,s] *env_fit$gr[n,s] ) 
 
 
 		env_fit$Ni3[n+1,s ] = env_fit$Ni3[n, s] * env_fit$rho_c3[n,s ]
@@ -298,25 +315,25 @@ for (h in 1:nsamp) {
 
 			#Model 2: "Unscaled" lottery model for the residents -- without explicit competition for space
 			#Invader species: 
-			env_fit$Nj_runif2[n+1,-s,h ] = env_fit$Nj_runif2[n,-s,h ]* ( ( env_fit$sr[-s]*(1- Hs[-s]) )  + 
-								(env_fit$fr[n,-s]* Hs[-s]/
-							(1+sum( env_fit$fr[n,-s]*  Hs[-s] * env_fit$Nj_runif2[n,-s,h ]) ) ) )
+			env_fit$Nj_runif2[n+1,-s,h ] = env_fit$Nj_runif2[n,-s,h ]* ( ( env_fit$sr[-s]*(1- gs_o[n,-s]) )  + 
+								(env_fit$fr[n,-s]* Hs[-s]*gs_o[n,-s]/
+							(1+sum( env_fit$fr[n,-s]* gs_o[n,-s]* Hs[-s] * env_fit$Nj_runif2[n,-s,h ]) ) ) )
 
-			env_fit$rho_runif2[n,s,h ] = ( ( env_fit$sr[s]*(1- Hs[s]) )  + 
-								(env_fit$fr[n,s]* Hs[s]/
-							(1+sum( env_fit$fr[n,-s]*  Hs[-s] * env_fit$Nj_runif2[n, -s ,h ]) ) ) )
+			env_fit$rho_runif2[n,s,h ] = ( ( env_fit$sr[s]*(1- gs_o[n,s]) )  + 
+								(env_fit$fr[n,s]* Hs[s]*gs_o[n,s]/
+							(1+sum( env_fit$fr[n,-s]*gs_o[n,-s]* Hs[-s] * env_fit$Nj_runif2[n, -s ,h ]) ) ) )
 
 			if (s == 1){ 
 			#Model 1: "Unscaled" lottery model for all species
-			env_fit$Nj_runif1[n+1, ,h] = env_fit$Nj_runif1[n,,h]*( env_fit$sr*(1- Hs)  + 
-							 env_fit$fr[n, ]* Hs/
-						(1+sum( env_fit$fr[n, ]* Hs * env_fit$Nj_runif1[n,,h ]) ) )
+			env_fit$Nj_runif1[n+1, ,h] = env_fit$Nj_runif1[n,,h]*( env_fit$sr*(1- gs_o[n,])  + 
+							 env_fit$fr[n, ]*gs_o[n,]* Hs/
+						(1+sum( env_fit$fr[n, ]* Hs *gs_o[n, ]* env_fit$Nj_runif1[n,,h ]) ) )
 			}
 
 
 			#Model 3: Single species
-			env_fit$rho_runif3[n,s,h ] = ( ( env_fit$sr[s]*(1- Hs[s]) )  + 
-								env_fit$fr[n,s] * Hs[s]) #/(env_fit$fr[n,]*Hs * env_fit$Nj3[n,,h]) )  
+			env_fit$rho_runif3[n,s,h ] = ( ( env_fit$sr[s]*(1- gs_o[n,s]) )  + 
+								env_fit$fr[n,s] * gs_o[n,s]*Hs[s]) #/(env_fit$fr[n,]*Hs * env_fit$Nj3[n,,h]) )  
 
 			env_fit$Nj_runif3[n+1,s,h ] = env_fit$Nj_runif3[n,s,h ] * env_fit$rho_runif3[n,s,h ] 
 

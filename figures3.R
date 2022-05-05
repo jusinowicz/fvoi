@@ -11,7 +11,8 @@ source("../info_theory_functions/info_theory_functions.R")
 # Load this data here. Other files are loaded within figure blocks due to 
 # repeated name usage. 
 #=============================================================================
-load("./data/fvoi_plot1.var") #Figure 1,3,5
+load("./data/fvoi_plot1.var") #Figure 1,5
+# fvoi_plot3.var #Figure 3
 #"ni_simple.var" #Figure 2
 #"env_fit2.var"# #Figure 4
 # "dm_simp.var" #Figure 2 
@@ -641,6 +642,7 @@ ggsave(file="figure2.pdf",g)
 #=============================================================================
 # Figure 3
 #=============================================================================
+load("./data/fvoi_plot3.var") #Figure 3
 ###Draw species intrinsic fitness curve and plot them overtop the realized 
 ###env distribution: 
 ngens = length(env_fit$env)
