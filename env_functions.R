@@ -332,10 +332,10 @@ get_single_opt_CT= function ( fr, ep, nspp, sr, gw =NULL, incr=0.01) {
 	nspp = dim(fr)[2]
 	#if(is.null(gw)) {gw = c(matrix(1,nspp,1))}
 
-	env_fit = NULL
-	env_fit$sr =sr
-	env_fit$fr = fr
-	env_fit$ep = ep
+	ef = NULL
+	ef$sr =sr
+	ef$fr = fr
+	ef$ep = ep
 
 	#The output: optimal germination rate (b0) and optimal probabilities (bi)
 	opts = NULL
@@ -344,7 +344,7 @@ get_single_opt_CT= function ( fr, ep, nspp, sr, gw =NULL, incr=0.01) {
 
 for(f in 1:nspp){
 		#Order the vector of probability * payout.
-		po = (env_fit$fr[,f])*env_fit$ep
+		po = (ef$fr[,f])*ef$ep
 		po_i = po[order(po,decreasing=T) ]
 		fr_i = fr[,f][order(po,decreasing=T) ]
 		#fr_i[fr_i<1] = 0
