@@ -47,7 +47,6 @@ source("./../fvoi/env_functions.R")
 ngens = 2000 #Time steps
 nspp = 2 #Species
 nsamp = 50
-gsu = 0.8 
 #=============================================================================
 #Stored values, i.e. population dynamics, information metrics
 #=============================================================================
@@ -142,10 +141,10 @@ for(o in 1:nincs){
 		#	3. normal variance		Gaussian around the optimum
 		#
 		#	Germination:	
-		#	1. q_corr		define reproductive cue relative to fitness using a 
+		#	1. g_corr		define germination cue relative to fitness using a 
 		#					correlation coefficient. g_corr = 1 is perfect prediction ,
 		#					0 is no correlation, negative values would be harmful
-		#	2. q_always		always reproduce a fraction of seeds. 
+		#	2. g_always		always germinate a fraction of seeds. 
 		#	3.				in progress
 		#
 		#	Ennvironment: 
@@ -174,8 +173,8 @@ for(o in 1:nincs){
 		env_fit$opt = c(opt_start - opts[o], opt_start + opts[o] ) #runif(nspp)
 		env_fit$var = matrix( 0.1 ,nspp,1) #A generic variance
 		env_fit$min_max = NULL
-		env_fit$q_mean = NULL
-		env_fit$q_var = NULL
+		env_fit$g_mean = NULL
+		env_fit$g_var = NULL
 
 		###Choose 1: 
 		#A. If the environment is uniform, min_max can be used to specify the upper and lower
@@ -212,13 +211,13 @@ for(o in 1:nincs){
 		env_fit$fr = get_fitness(env_fit)
 
 		################################################
-		####4. Cue: Distribution of species' optimal reproductive environment 
+		####4. Cue: Distribution of species' optimal germination environment 
 		################################################
 		env_fit$cue_method = "g_corr"
 		#env_fit$cue_dist = "uniform"
 		#Define how correlated each species' cue is with the environment:
 		env_fit$g_corr = runif(nspp, min = 0.98, max=0.98)
-		env_fit$qr= get_env_cue(env_fit, method = env_fit$cue_method)
+		env_fit$gr= get_env_cue(env_fit, method = env_fit$cue_method)
 
 		################################################
 		####5. Misc
@@ -231,18 +230,6 @@ for(o in 1:nincs){
 		#Adding a small amount to remove the 0s makes analysis way easier.
 		env_fit$fr = env_fit$fr* env_fit$lambda_r+.01 
 
-		#Germination: This is a routine to get optimal germination rates: 
-		ep = hist(env_fit$env)
-		env_fit$env_prob = ep$counts/sum(ep$counts)
-		b1 = seq(min(env_fit$fr[,1]), max(env_fit$fr[,1] ), length = length(ep$breaks))
-		b2 = seq(min(env_fit$fr[,2]), max(env_fit$fr[,2] ), length = length(ep$breaks))
-		fs1 = hist(env_fit$fr[,1], breaks = b1 )
-		fs2 = hist(env_fit$fr[,2], breaks = b2 )
-		env_fit$fs = cbind( fs1$mids, fs2$mids)
-		gst = get_single_opt_CT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
-		gst$b0[gst$b0<=0] = gsu
-		gst$b0[gst$b0>=0.99] = gsu
-		gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
 
 		#####################################################
 		####For runif germination: 
@@ -266,26 +253,26 @@ for(o in 1:nincs){
 				#=============================================================================
 
 				#Model 2: "Unscaled" lottery model for the residents -- without explicit competition for space
-				env_fit$Ni2[n+1, -s] = env_fit$Ni2[n,-s ]*( env_fit$sr[-s]*(1- gs_o[n,-s])  + 
-									 env_fit$qr[n,-s] * env_fit$fr[n,-s]* gs_o[n,-s]/
-								(1+sum( env_fit$fr[n,-s]* env_fit$qr[n,-s] * gs_o[n,-s] * env_fit$Ni2[n,-s ]) ) )
+				env_fit$Ni2[n+1, -s] = env_fit$Ni2[n,-s ]*( env_fit$sr[-s]*(1- env_fit$gr[n,-s])  + 
+									 env_fit$fr[n,-s]* env_fit$gr[n,-s]/
+								(1+sum( env_fit$fr[n,-s]*  env_fit$gr[n,-s] * env_fit$Ni2[n,-s ]) ) )
 
 				#IGR
-				env_fit$rho_c2[n,s] = ( ( env_fit$sr[s]*(1- gs_o[n,s]) )  + 
-									(env_fit$fr[n,s]* env_fit$qr[n,s] * gs_o[n,-s]/
-								(1+sum( env_fit$fr[n,-s]* env_fit$qr[n,-s] * gs_o[n,-s] * env_fit$Ni2[n,-s ]) ) ) ) 
+				env_fit$rho_c2[n,s] = ( ( env_fit$sr[s]*(1- env_fit$gr[n,s]) )  + 
+									(env_fit$fr[n,s]* env_fit$gr[n,s]/
+								(1+sum( env_fit$fr[n,-s]*  env_fit$gr[n,-s] * env_fit$Ni2[n,-s ]) ) ) ) 
 
 				if (s == 1){ 
 					#Model 1: "Unscaled" lottery model for all species
-					env_fit$Ni[n+1, ] =  env_fit$Ni[n, ]*( env_fit$sr*(1- gs_o[n,])  + 
-										 env_fit$fr[n,]* env_fit$qr[n, ] *gs_o[n,-s]/
-									(1+sum( env_fit$fr[n, ]* env_fit$qr[n, ] * gs_o[n,-s] * env_fit$Ni[n, ]) ) )
+					env_fit$Ni[n+1, ] =  env_fit$Ni[n, ]*( env_fit$sr*(1- env_fit$gr[n, ])  + 
+										 env_fit$fr[n,]* env_fit$gr[n, ]/
+									(1+sum( env_fit$fr[n, ]*  env_fit$gr[n, ] * env_fit$Ni[n, ]) ) )
 				}
 
 
 				#Model 3: Single species
-				env_fit$rho_c3[n,s ] = ( ( env_fit$sr[s]*(1- gs_o[n,s]) )  + 
-									env_fit$fr[n,s] *env_fit$qr[n,s]* gs_o[n,s]) 
+				env_fit$rho_c3[n,s ] = ( ( env_fit$sr[s]*(1- env_fit$gr[n,s]) )  + 
+									env_fit$fr[n,s] * env_fit$gr[n,s] ) 
 
 
 				env_fit$Ni3[n+1,s ] = env_fit$Ni3[n, s] * env_fit$rho_c3[n,s ]
@@ -297,19 +284,19 @@ for(o in 1:nincs){
 				Hs = c(as.matrix(unlist(H_runif[n,])))
 				#Model 2: "Unscaled" lottery model for the residents -- without explicit competition for space
 				#Invader species: 
-				env_fit$Nj_runif2[n+1,-s,h ] = env_fit$Nj_runif2[n,-s,h ]* ( ( env_fit$sr[-s]*(1- gs_o[n,-s]) )  + 
-									(env_fit$fr[n,-s]* gs_o[n,-s]*Hs[-s]/
-								(1+sum( env_fit$fr[n,-s]* gs_o[n,-s]* Hs[-s] * env_fit$Nj_runif2[n,-s,h ]) ) ) )
+				env_fit$Nj_runif2[n+1,-s,h ] = env_fit$Nj_runif2[n,-s,h ]* ( ( env_fit$sr[-s]*(1- Hs[-s]) )  + 
+									(env_fit$fr[n,-s]* Hs[-s]/
+								(1+sum( env_fit$fr[n,-s]*  Hs[-s] * env_fit$Nj_runif2[n,-s,h ]) ) ) )
 
-				env_fit$rho_runif2[n,s,h ] = ( ( env_fit$sr[s]*(1- gs_o[n,-s]) )  + 
-									(env_fit$fr[n,s]* gs_o[n,-s]*Hs[s]/
-								(1+sum( env_fit$fr[n,-s]* gs_o[n,-s]*  Hs[-s] * env_fit$Nj_runif2[n, -s ,h ]) ) ) )
+				env_fit$rho_runif2[n,s,h ] = ( ( env_fit$sr[s]*(1- Hs[s]) )  + 
+									(env_fit$fr[n,s]* Hs[s]/
+								(1+sum( env_fit$fr[n,-s]*  Hs[-s] * env_fit$Nj_runif2[n, -s ,h ]) ) ) )
 
 				if (s == 1){ 
 				#Model 1: "Unscaled" lottery model for all species
-				env_fit$Nj_runif1[n+1, ,h] = env_fit$Nj_runif1[n,,h]*( env_fit$sr*(1- gs_o[n,])  + 
+				env_fit$Nj_runif1[n+1, ,h] = env_fit$Nj_runif1[n,,h]*( env_fit$sr*(1- Hs)  + 
 								 env_fit$fr[n, ]* Hs/
-							(1+sum( env_fit$fr[n, ]* Hs *gs_o[n,]* env_fit$Nj_runif1[n,,h ]) ) )
+							(1+sum( env_fit$fr[n, ]* Hs * env_fit$Nj_runif1[n,,h ]) ) )
 				}
 
 
@@ -416,8 +403,8 @@ deltaG1_sing = env_fit$mc3_all-env_fit$mr3_all
 colMeans(1/env_fit$fr)*env_fit$sr
 
 #Information gain as afunction of model
-plot(env_fit$mc2_all[, ,1]-env_fit$mr2_all[,,1],col="red")                                                                  
-points(env_fit$mc3_all[,,1]-env_fit$mr3_all[,,1])   
+plot(env_fit$mc2_all[,1]-env_fit$mr2_all[,1],col="red")                                                                  
+points(env_fit$mc3_all[,1]-env_fit$mr3_all[,1])   
 
 plot(env_fit$mc2_all[,2]-env_fit$mr2_all[,2],col="red")                                                                  
 points(env_fit$mc3_all[,2]-env_fit$mr3_all[,2])   
