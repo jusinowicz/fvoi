@@ -56,7 +56,9 @@ nspp = 2
 sr = c(0.8,0.8)
 
 #Constant germination rate:
-gsu = 0.75
+gsu = 0.2 #Constant germination rate for model 
+gs_min = 0.01#For control over the germination rate, make this very small. 
+
 
 #=============================================================================
 #Stored values, i.e. population dynamics, information metrics

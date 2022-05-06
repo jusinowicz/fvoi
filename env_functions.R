@@ -364,6 +364,7 @@ for(f in 1:nspp){
 		#Find this cutoff point. This is a comparison between po_i and Ck. 
 		#Find the smallest k for which p_(k+1)*o_(p+1) <= Ck
 		tc1 = unname(which (po_i <= Ck[1:nenv]) )
+		if(length(tc1)<=0){tc1=2}
 		tc = min(tc1)-1
 
 		#This is the optimal amount to retain:
