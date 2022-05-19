@@ -36,10 +36,10 @@ cc[1,1]*pec[1,1]*log(xec[1,1]*30) + cc[2,1]*pec[2,1]*log(xec[2,1]*15)+
 cc[1,2]*pec[1,2]*log(xec[1,2]*30) + cc[2,2]*pec[2,2]*log(xec[2,2]*15)
 
 #####Subfair and bet hedging
-P = c(0.9,0.1) #Environment
+P = c(0.7,0.3) #Environment
 X = c(0.5,0.5) #Uniform
 X2 = P #Proportionate
-R = c(30,0.001) #Reproduction
+R = c(30,0.1) #Reproduction
 
 gi = seq(0.01,1,0.01)
 si = 1
@@ -54,9 +54,14 @@ pg1=Pbig*log((1-gi)*si + gi*Xbig*Rbig)
 pg2=Pbig*log((1-gi)*si + gi*X2big*Rbig)
 
 #This will show the optimal germination value: 
-plot(gi,rowSums(pg2) )
-points(gi,rowSums(pg1),col="red")
+pg1 = rowSums(pg1) 
+pg2 = rowSums(pg2) 
 
+plot(gi,pg2 )
+points(gi,pg1,col="red")
+
+gi_opt1 = gi[which(pg1 == max(pg1)) ] 
+gi_opt2 = gi[which(pg2 == max(pg2)) ] 
 
 #####Subfair and bet hedging with arbitrary number of 
 #####environmental states.
@@ -97,15 +102,11 @@ Pbig =matrix(P,length(gi), length(P),byrow=T)
 
 pg1=Pbig*log((1-gi)*si + kronecker(gi, t(X*R)))
 pg2=Pbig*log((1-gi)*si + kronecker(gi, t(c(X2)*R)))
+pg1 = rowSums(pg1) 
+pg2 = rowSums(pg2) 
 
-plot(gi,rowSums(pg2) )
-points(gi,rowSums(pg1),col="red")
+plot(gi,pg2 )
+points(gi,pg1,col="red")
 
-
-
-#Proportionate 
-ce2 = P*log(X2) 
-sum(e1+ce2) 
-Dkl=sum(P*log(P/X) ) 
-
-pg1=((1-gi)*si + gi*xec*rec) 
+gi_opt1 = gi[which(pg1 == max(pg1)) ] 
+gi_opt2 = gi[which(pg2 == max(pg2)) ] 
