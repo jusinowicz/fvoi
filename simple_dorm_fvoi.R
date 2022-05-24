@@ -208,7 +208,7 @@ for (t in 1:tsize){
 	# fr_opt[t,,] = fit_tmp$sp_fit
 }
 
-gst = get_single_opt_CT( fr=fs, ep=env_prob, nspp=nspp, sr = sr ) #Optimal 
+gst = get_single_opt_KKT( fr=fs, ep=env_prob, nspp=nspp, sr = sr ) #Optimal 
 gst$b0[gst$b0<=0] = gsu
 gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
 #qs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 

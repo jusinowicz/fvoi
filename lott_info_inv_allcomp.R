@@ -241,7 +241,7 @@ for(o in 1:nincs){
 		fs1 = hist(env_fit$fr[,1], breaks = b1 )
 		fs2 = hist(env_fit$fr[,2], breaks = b2 )
 		env_fit$fs = cbind( fs1$mids, fs2$mids)
-		gst = get_single_opt_CT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
+		gst = get_single_opt_KKT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
 		gst$b0[gst$b0<=0] = gsu
 		gst$b0[gst$b0>=gs_min] = gsu
 		gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)

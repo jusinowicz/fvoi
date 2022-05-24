@@ -316,7 +316,7 @@ get_single_opt= function ( fr, nspp, sr, gw =NULL, incr=0.01) {
 #	Ni[t+1] = Ni[t]( (1-g_i)*s_i + g_i * f_i )
 #
 #This procedure follows the solution from Cover and Thomas, Section 6 problem 2
-#based on a combination of Tucker-Kuhn conditions and a "water filling" algorithm
+#based on Karush-Kuhn-Tucker (aka Tucker-Kuhn) conditions
 #
 #	Ni 			The population vectors (matrix) from the main code
 #	env			The vector of environmental states, length must match dim[1] 
@@ -326,7 +326,7 @@ get_single_opt= function ( fr, nspp, sr, gw =NULL, incr=0.01) {
 #				get the multi-strategy optimum with get_multi_opt
 #=============================================================================
 
-get_single_opt_CT= function ( fr, ep, nspp, sr, gw =NULL, incr=0.01) {
+get_single_opt_KKT= function ( fr, ep, nspp, sr, gw =NULL, incr=0.01) {
 	
 	nenv = dim(fr)[1]
 	nspp = dim(fr)[2]

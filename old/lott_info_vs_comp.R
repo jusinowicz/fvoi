@@ -181,7 +181,7 @@ b2 = seq(min(env_fit$fr_comp[,2]), max(env_fit$fr_comp[,2] ), length = length(ep
 fs1 = hist(env_fit$fr_comp[,1], breaks = b1 )
 fs2 = hist(env_fit$fr_comp[,2], breaks = b2 )
 env_fit$fs_comp = cbind( fs1$mids, fs2$mids)
-gst = get_single_opt_CT( fr=env_fit$fs_comp, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
+gst = get_single_opt_KKT( fr=env_fit$fs_comp, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
 gst$b0[gst$b0<=0] = gsu
 gst$b0[gst$b0>=0.99] = gsu
 gs_oc =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
@@ -192,7 +192,7 @@ b2 = seq(min(env_fit$fr_niche[,2]), max(env_fit$fr_niche[,2] ), length = length(
 fs1 = hist(env_fit$fr_niche[,1], breaks = b1 )
 fs2 = hist(env_fit$fr_niche[,2], breaks = b2 )
 env_fit$fs_comp = cbind( fs1$mids, fs2$mids)
-gst = get_single_opt_CT( fr=env_fit$fs_comp, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
+gst = get_single_opt_KKT( fr=env_fit$fs_comp, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
 gst$b0[gst$b0<=0] = gsu
 gst$b0[gst$b0>=0.99] = gsu
 gs_on =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
