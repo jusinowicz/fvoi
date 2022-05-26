@@ -62,18 +62,23 @@ points(gi,pg1,col="red")
 gi_opt1 = gi[which(pg1 == max(pg1)) ] 
 gi_opt2 = gi[which(pg2 == max(pg2)) ] 
 
-gst = 1-(get_single_opt_KKT( fr=as.matrix(R), ep=as.matrix(P), nspp=1, sr = 1)) #Optimal 
-
+gst = (get_single_opt_KKT( fr=as.matrix(R), ep=as.matrix(P), nspp=1, sr = 1)) #Optimal 
+X2 = c(gst$bi)
 
 #Uniform 
 esub1 = P*log((1-gi_opt1)/X+R)       
 cesub = P*log(X)  
 sum(esub1+cesub)
+Dkl=sum(P*log(P/X) )
 
-#Proportionate 
-cesub2 = P*log(X2) 
-sum(esub1+cesub2) 
-Dkl=sum(P*log(P/X) ) 
+#Optimal 
+esub2 = P*log((1-gi_opt2)/X2+R) 
+cesub2 = P*log(X2)  
+esub2[!is.finite(esub2)] = 0 
+cesub2[!is.finite(cesub2)] = 0 
+sum(esub2+cesub2) 
+
+Dkl2=sum(P*log(P/X2) ) 
  
 
 
