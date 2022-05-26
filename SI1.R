@@ -49,7 +49,6 @@ X2big = matrix(X2, length(gi),2,byrow=T)
 Rbig = matrix(R, length(gi),2,byrow=T)
 Pbig =matrix(P,length(gi), length(P),byrow=T)
 
-
 pg1=Pbig*log((1-gi)*si + gi*Xbig*Rbig)
 pg2=Pbig*log((1-gi)*si + gi*X2big*Rbig)
 
@@ -62,6 +61,22 @@ points(gi,pg1,col="red")
 
 gi_opt1 = gi[which(pg1 == max(pg1)) ] 
 gi_opt2 = gi[which(pg2 == max(pg2)) ] 
+
+gst = 1-(get_single_opt_KKT( fr=as.matrix(R), ep=as.matrix(P), nspp=1, sr = 1)) #Optimal 
+
+
+#Uniform 
+esub1 = P*log((1-gi_opt1)/X+R)       
+cesub = P*log(X)  
+sum(esub1+cesub)
+
+#Proportionate 
+cesub2 = P*log(X2) 
+sum(esub1+cesub2) 
+Dkl=sum(P*log(P/X) ) 
+ 
+
+
 
 #####Subfair and bet hedging with arbitrary number of 
 #####environmental states.
