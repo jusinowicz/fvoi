@@ -53,10 +53,10 @@ num_states = 10 #Environmental bins or states
 nspp = 2
 
 #Survival rates: 
-sr = c(0.8,0.8)
+sr = c(1,1)
 
 #Constant germination rate:
-gsu = 0.2 #Constant germination rate for model 
+gsu = 0.71 #Constant germination rate for model 
 gs_min = 0.01#For control over the germination rate, make this very small. 
 
 
@@ -172,7 +172,7 @@ fs = matrix(0,num_states,nspp)
 # 	method=fm_method )}
 
 mstates=floor(num_states/2)
-fs = get_species_fit_pois(mstates, num_states, nspp,fm )*30
+fs = get_species_fit_pois(mstates, num_states, nspp,fm )*10
 
 ####Germination fraction
 
@@ -218,7 +218,7 @@ gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
 #This function creates a table of conditional probabilities based on the
 #G(E|C). Needs acc, which is a number between 0 and 1 describing how accurate
 #the cue is on average (1 is perfect accuracy, 0 is none)
-qec = get_cp(env_states, acc=c(1,1) )
+qec = get_cp(env_states, acc=c(0.9,0.9) )
 
 #Make G(C|E) from G(E|C) to simulate population dynamics later:
 qj = qec 
@@ -251,6 +251,20 @@ g_in_e = H1[apply(a1,2,which.max)]
 g_in_e2 = a2 
 g_in_e2[,,1] =gec[,,1] * matrix( apply(a2[,,1],2,max) >=1, num_states, num_states,byrow=T ) 
 g_in_e2[,,2] =gec[,,2] * matrix( apply(a2[,,2],2,max) >=1, num_states, num_states,byrow=T ) 
+
+gst_ec = array( matrix(0,num_states,num_states), dim=c(num_states,num_states,nspp))
+xec = gst_ec
+for (s in 1:nspp){
+	for (i in 1:num_states){
+		gst_ec[,i,s] = (get_single_opt_KKT( fr=as.matrix(fs[,i]), ep=as.matrix(qec[,i,s]), 
+					nspp=1, sr = 1))$bi  #Optimal 
+	}
+	#Standardize columns
+	xec[,,s] = gst_ec[,,s]/matrix(colSums(gst_ec[,,s]),2,2,byrow=T)
+	
+}
+xec[!is.finite(xec)] = 0
+
 
 #g_in_e = env_states*g_in_e/(sum(env_states*g_in_e)) 
 ###########
@@ -310,11 +324,15 @@ for (t in 1:ngens){
 	rho_i2[t, ] = ( sr*(1-gs_o[t,] )   + 
 	  			gs_o[t,]*sp_fit_i[t,] * qs[(env_sensed[t,]+1)] )
 
-	# #This version uses the germination rate that matches the sensed environment
-	# #and assumes that species are selective as to what conditions they germinate
+	# #This version uses the optimal rates of reproduction from get_single_opt_KKT
 	# rho_i3[t, ] = ( sr*(1- gs_o[t,] )   + 
 	#   			gs_o[t,]*sp_fit_i[t,] * q_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ] )
 	# gt_e2[t, ] =  g_in_e2[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ]
+
+	rho_i3[t, ] = ( sr*(1- gs_o[t,] )   + 
+	  			gs_o[t,]*sp_fit_i[t,] * xec[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ] )
+	gt_e2[t, ] =  xec[ matrix( c( (env_sensed[t,]+1), c(env_act[t,]+1,env_act[t,]+1),1:nspp ), 2, 3 ) ]
+
 
 	#This version uses the ideal (max) germination rate that matches the sensed environment
 	# rho_i4[t, ] = ( sr*(1-gs_o[t,] )   + 

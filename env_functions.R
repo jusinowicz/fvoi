@@ -335,6 +335,7 @@ get_single_opt_KKT= function ( fr, ep, nspp, sr, gw =NULL, incr=0.01) {
 	ef = NULL
 	ef$sr =sr
 	ef$fr = fr
+	ef$fr[ef$fr<1] = 0
 	ef$ep = ep
 
 	#The output: optimal germination rate (b0) and optimal probabilities (bi)
@@ -359,7 +360,7 @@ for(f in 1:nspp){
 			C2[n] = sum(1/(fr_i[1:n])) + (1-(sum(ep_i[1:n])) )/ Ck [n] 
 		}
 		Ck[!is.finite(Ck)] = 0
-		#Ck[Ck<0] = 0
+		Ck[Ck<0] = 0
 
 		#Find this cutoff point. This is a comparison between po_i and Ck. 
 		#Find the smallest k for which p_(k+1)*o_(p+1) <= Ck
