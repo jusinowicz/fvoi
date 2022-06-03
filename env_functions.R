@@ -342,6 +342,7 @@ get_single_opt_KKT= function ( fr, ep, nspp, sr, gw =NULL, incr=0.01) {
 	opts = NULL
 	opts$b0 = matrix(0,nspp,1)
 	opts$bi = matrix(0,nenv, nspp)
+	opts$ind = matrix(0,nenv, nspp)
 
 for(f in 1:nspp){
 		#Order the vector of probability * payout.
@@ -351,6 +352,8 @@ for(f in 1:nspp){
 		#fr_i[fr_i<1] = 0
 		ep_i = ep[order(po,decreasing=T) ]
 
+		#Keep old indexing for reference
+		po_ind = (1:nenv)[order(po,decreasing=T) ]
 
 		#Define this metric: 
 		Ck = matrix(0,nenv,1)
@@ -383,6 +386,7 @@ for(f in 1:nspp){
 
 		opts$b0[f] = b0
 		opts$bi[,f] = bi
+		opts$ind[,f] = po_ind
 	}
 	
 	return(opts)

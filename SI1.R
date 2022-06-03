@@ -40,7 +40,7 @@ cc[1,2]*pec[1,2]*log(xec[1,2]*30) + cc[2,2]*pec[2,2]*log(xec[2,2]*15)
 #####Subfair and bet hedging
 source("./env_functions.R")
 
-P = c(0.7,0.3) #Environment
+P = c(0.3,0.7) #Environment
 X = c(0.5,0.5) #Uniform
 X2 = P #Proportionate
 R = c(30,0.1) #Reproduction
@@ -72,14 +72,21 @@ gst = (get_single_opt_KKT( fr=as.matrix(R), ep=as.matrix(P), nspp=1, sr = 1)) #O
 X2 = c(gst$bi/sum(gst$bi)) 
 
 #Uniform 
-esub1 = P*log((1-gi_opt1)/X+R)       
+esub1 = P*log((1-gi_opt1)/X+R*gi_opt1)       
 cesub = P*log(X)  
 sum(esub1+cesub)
 Dkl=sum(P*log(P/X) )
 
 #Optimal
-X2= c(0.7,0.3) 
-esub2 = P*log((1-gi_opt2)/X2+R) 
+#X2= c(0.3,0.7) 
+P*log((1-gi_opt2)+R*gi_opt1*X2) 
+
+s1 = 1-gi_opt1
+P*log( s1 + R*gi_opt1*X2 )
+P*log( R*gi_opt1 ) + P*log( s1/(R*gi_opt1) + X2 )
+
+
+esub2 = P*log((1-gi_opt2)/X2+R*gi_opt2) 
 cesub2 = P*log(X2)  
 esub2[!is.finite(esub2)] = 0 
 cesub2[!is.finite(cesub2)] = 0 

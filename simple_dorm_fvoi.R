@@ -56,9 +56,8 @@ nspp = 2
 sr = c(1,1)
 
 #Constant germination rate:
-gsu = 0.71 #Constant germination rate for model 
-gs_min = 0.01#For control over the germination rate, make this very small. 
-
+gsu = 0.27 #Constant germination rate for model 
+gs_min = 0.01#For control over the germination rate, make this very small
 
 #=============================================================================
 #Stored values, i.e. population dynamics, information metrics
@@ -127,6 +126,11 @@ env_states = hist(env_states,0:(num_states))$counts
 # env_states = runif(num_states)
 
 env_states = env_states/sum(env_states)
+
+###
+#For the SI example: 
+num_states = 2
+env_states = c(0.3,0.7)
 
 env = sample(x=(0:(num_states-1)), size=ngens, prob = env_states, replace=T)
 #env = make_simple_env(env_states,ngens)
@@ -210,7 +214,8 @@ for (t in 1:tsize){
 
 gst = get_single_opt_KKT( fr=fs, ep=env_prob, nspp=nspp, sr = sr ) #Optimal 
 gst$b0[gst$b0<=0] = gsu
-gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
+gs_o =  matrix( c( matrix( gsu,1,2) ),ngens,nspp,byrow=T)
+#gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
 #qs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 
 #qs_io = matrix(c(get_multi_opt(fr=fr_opt, gs=gs nspp=nspp, sr = sr ) ),num_states,nspp,byrow=T )
 
@@ -256,11 +261,14 @@ gst_ec = array( matrix(0,num_states,num_states), dim=c(num_states,num_states,nsp
 xec = gst_ec
 for (s in 1:nspp){
 	for (i in 1:num_states){
-		gst_ec[,i,s] = (get_single_opt_KKT( fr=as.matrix(fs[,i]), ep=as.matrix(qec[,i,s]), 
-					nspp=1, sr = 1))$bi  #Optimal 
+		 gst_tmp = (get_single_opt_KKT( fr=as.matrix(fs[,s]), ep=as.matrix(qec[,i,s]), 
+					nspp=1, sr = 1)) #Optimal 
+		 gst_ec[gst_tmp$ind,i,s] = gst_tmp$bi
+		
 	}
+
 	#Standardize columns
-	xec[,,s] = gst_ec[,,s]/matrix(colSums(gst_ec[,,s]),2,2,byrow=T)
+	xec[,,s] = gst_ec[,,s]/matrix(colSums(gst_ec[,,s]),num_states,num_states,byrow=T)
 	
 }
 xec[!is.finite(xec)] = 0
@@ -270,7 +278,13 @@ xec[!is.finite(xec)] = 0
 ###########
 
 #Use this for the runif samples: 
-qs = cbind(env_states,env_states)	
+#qs = cbind(env_states,env_states)
+qs = matrix(0,num_states,nspp)
+for (s in 1:nspp){	
+	gst_tmp = (get_single_opt_KKT( fr=as.matrix(fs[,s]), ep=as.matrix(env_prob), nspp=1, sr = sr[s])) #Optimal 
+	qs[gst_tmp$ind,s] = gst_tmp$bi/sum(gst_tmp$bi)
+}
+
 qs_noi_tmp = seq(0,0.99,1/(length(qs)-1) )
 
 #=============================================================================
@@ -283,7 +297,7 @@ for (t in 1:ngens){
 	sp_fit_o[t,] = fs[(env_act[t]+1), ]
 
 	#No information, v1: totally random
-	qs_noi = runif(nspp)
+	#qs_noi = runif(nspp)
 	qs_noi = c(1/num_states, 1/num_states)
 	qnoi_fit[t,] = qs_noi 
 	rho_noi[t, ] = ( sr*(1-gs_o[t,])   + gs_o[t,]*sp_fit_o[t,]  * qnoi_fit[t,] ) 
