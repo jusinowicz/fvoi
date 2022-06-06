@@ -104,6 +104,7 @@ bh2 = bh1/P
 esub2 = P*log(bh2)
 cesub2 = P*log(P)
 sum(esub2+cesub2)
+Dkl2=sum(P*log(P/P) ) 
 
 
 #Laplace or additive smooth?
@@ -140,9 +141,23 @@ s1 = (pec*log((1-gi_opt1)*si + gi_opt1*xec*rec))
 r3 = sum(colSums(jec)*rowSums(s1) ) 
 
 cc * rowSums(  (pec*log( (1-gi_opt1)*si + gi_opt1*xec*rec)  )    )
-
+pec2 = t(pec)
+pce = jec/(matrix( rowSums(jec),2,2 )) 
 bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec
-bhec2 = bhec1*jec/cc 
+# x= -(d*f-b*g)/(b*c-a*d)
+# y= (c*f-a*g)/(b*c-a*d)
+x= -(pce[2,2]*bhec1[1,1]-pce[1,2]*bhec1[2,1])/(pce[1,2]*pce[2,1]-pce[1,1]*pce[2,2])
+y= (pce[2,1]*bhec1[1,1]-pce[1,1]*bhec1[2,1])/(pce[1,2]*pce[2,1]-pce[1,1]*pce[2,2])
+
+x= -(pec2[2,2]*bhec1[1,1]-pec2[1,2]*bhec1[2,1])/(pec2[1,2]*pec2[2,1]-pec2[1,1]*pec2[2,2])
+y= (pec2[2,1]*bhec1[1,1]-pec2[1,1]*bhec1[2,1])/(pec2[1,2]*pec2[2,1]-pec2[1,1]*pec2[2,2])
+
+xy = matrix(c(x,y),2,2,byrow=T)
+bhec2 = t(pce*xy)
+
+f3 = sum(rowSums(jec)*log(bhec1[1,]) )
+
+bhec2 = bhec1*cc/jec 
 f3 = sum(rowSums(jec)*log(rowSums(bhec2)) )
 HEC3 = -sum(jec*(log(jec/cc))) #Conditional entropy
 rho3 = f3-HEC3
@@ -163,16 +178,8 @@ cesub3[!is.finite(cesub3)] = 0
 sum(esub3+cesub3) 
 Dkl3=sum(pec[xec>0]*log(pec[xec>0]/xec[xec>0]) ) 
 
-
-
 pec*( log(xec*( (1-gi_opt2)/xec+rec))) 
 pec*( log(( (1-gi_opt2)+rec*xec))) 
-
-
-
-
-
-
 
 #From fitness and info components. Note Dkl = 0 because xec = pec
 f1 = sum(rowSums(jec)*log(rec[,1]) )
