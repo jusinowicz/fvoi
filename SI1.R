@@ -72,6 +72,8 @@ gst = (get_single_opt_KKT( fr=as.matrix(R), ep=as.matrix(P), nspp=1, sr = 1)) #O
 X2 = c(gst$bi/sum(gst$bi)) 
 
 #Uniform 
+a1 = (1-gi_opt1)+R*gi_opt1*X
+r1 = sum(P*log((1-gi_opt1)+R*gi_opt1*X) ) 
 esub1 = P*log((1-gi_opt1)/X+R*gi_opt1)       
 cesub = P*log(X)  
 sum(esub1+cesub)
@@ -79,19 +81,24 @@ Dkl=sum(P*log(P/X) )
 
 #Optimal
 #X2= c(0.3,0.7) 
-P*log((1-gi_opt2)+R*gi_opt1*X2) 
+r2 = sum(P*log((1-gi_opt1)+R*gi_opt1*X2) ) 
+#This matches most closely to the non-bet-hedging example,
+#but may not always work
+# esub2 = P*log((1-gi_opt2)/X2+R*gi_opt2) 
+# cesub2 = P*log(X2) 
+# esub2[!is.finite(esub2)] = 0 
+# cesub2[!is.finite(cesub2)] = 0 
+# sum(esub2+cesub2) 
+# Dkl2=sum(P[X2>0]*log(P[X2>0]/X2[X2>0]) )  
 
-s1 = 1-gi_opt1
-P*log( s1 + R*gi_opt1*X2 )
-P*log( R*gi_opt1 ) + P*log( s1/(R*gi_opt1) + X2 )
-
-
-esub2 = P*log((1-gi_opt2)/X2+R*gi_opt2) 
-cesub2 = P*log(X2)  
-esub2[!is.finite(esub2)] = 0 
-cesub2[!is.finite(cesub2)] = 0 
-sum(esub2+cesub2) 
-Dkl2=sum(P[X2>0]*log(P[X2>0]/X2[X2>0]) ) 
+#The effective phenotypes convert the optimal X2 to 
+#bet-hedging proportions.
+#These are the "effective phenotypes"
+bh1 = (1-gi_opt1)+R*gi_opt1*X2 
+bh2 = bh1/P
+esub2 = P*log(bh2)
+cesub2 = P*log(P)
+sum(esub2+cesub2)
 
 #Laplace or additive smooth?
 # al1=0.1
@@ -120,8 +127,26 @@ for (i in 1:2){
 #Standardize columns
 xec = gst_ec/matrix(colSums(gst_ec),2,2,byrow=T)
 xec[!is.finite(xec)] = 0
+xec[1,2] = 1
 
-#Calculate the growth rate
+#Calculate the growth rate 
+s1 = (pec*log((1-gi_opt1)*si + gi_opt1*xec*rec))  
+r3 = sum(colSums(jec)*rowSums(s1) ) 
+bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec
+bhec2 = bhec1/pec
+f3 = sum(rowSums(jec)*log(bhec2[,1]) )
+HEC3 = -sum(jec*(log(jec/cc))) #Conditional entropy
+rho3 = f3-HEC3
+
+esub3 = pec*log(bhec2)
+cesub3 = pec*log(pec)
+sum(esub3+cesub3)
+
+f1 = sum(rowSums(jec)*log(rec[,1]) )
+HEC = -sum(jec*(log(jec/cc))) #Conditional entropy
+HCC = -sum(cc*pec[xec>0]*(log(xec[xec>0]))) #Conditional cross entropy
+rho2 = f1-HEC
+
 esub3 = pec*log((1-gi_opt2)/xec+rec) 
 cesub3 = pec*log(xec)  
 esub3[!is.finite(esub3)] = 0 
@@ -138,8 +163,7 @@ pec*( log(( (1-gi_opt2)+rec*xec)))
 
 
 
-s1 = (pec*log((1-gi_opt2)*si + gi_opt2*xec*rec))  
-rho1 = sum(colSums(jec)*rowSums(s1) ) 
+
 
 #From fitness and info components. Note Dkl = 0 because xec = pec
 f1 = sum(rowSums(jec)*log(rec[,1]) )

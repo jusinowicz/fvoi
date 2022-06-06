@@ -272,7 +272,8 @@ for (s in 1:nspp){
 	
 }
 xec[!is.finite(xec)] = 0
-
+xec[1,2,1] = 1
+xec[1,2,2] = 1
 
 #g_in_e = env_states*g_in_e/(sum(env_states*g_in_e)) 
 ###########
