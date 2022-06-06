@@ -132,9 +132,12 @@ xec[1,2] = 1
 #Calculate the growth rate 
 s1 = (pec*log((1-gi_opt1)*si + gi_opt1*xec*rec))  
 r3 = sum(colSums(jec)*rowSums(s1) ) 
+
+cc * rowSums(  (pec*log( (1-gi_opt1)*si + gi_opt1*xec*rec)  )    )
+
 bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec
-bhec2 = bhec1/pec
-f3 = sum(rowSums(jec)*log(bhec2[,1]) )
+bhec2 = bhec1*jec/cc 
+f3 = sum(rowSums(jec)*log(rowSums(bhec2)) )
 HEC3 = -sum(jec*(log(jec/cc))) #Conditional entropy
 rho3 = f3-HEC3
 
