@@ -72,9 +72,9 @@ gst = (get_single_opt_KKT( fr=as.matrix(R), ep=as.matrix(P), nspp=1, sr = 1)) #O
 X2 = c(gst$bi/sum(gst$bi)) 
 
 #Uniform 
-((1-gi_opt1)+gi_opt1*X*R)^P
-r1 = P*log((1-gi_opt1)+gi_opt1*X*R)
-esub1 = P*log((1-gi_opt1)/X+gi_opt1*R)       
+# ((1-gi_opt1)+gi_opt1*X*R)^P
+# r1 = P*log((1-gi_opt1)+gi_opt1*X*R)
+# esub1 = P*log((1-gi_opt1)/X+gi_opt1*R)       
 
 a1 = (1-gi_opt1)+R*gi_opt1*X
 r1 = sum(P*log((1-gi_opt1)+R*gi_opt1*X) ) 
@@ -85,16 +85,6 @@ sum(esub1+cesub)
 Dkl=sum(P*log(P/X) )
 
 #Optimal
-#X2= c(0.7,0.3) 
-((1-gi_opt1)+gi_opt1*X2*R)^P
-r2 = P*log((1-gi_opt1)+gi_opt1*X2*R)
-esub2 = P*log((1-gi_opt2)/X2+R) 
-cesub2 = P*log(X2)  
-esub2[!is.finite(esub2)] = 0 
-cesub2[!is.finite(cesub2)] = 0 
-sum(esub2+cesub2) 
-Dkl2=sum(P[X2>0]*log(P[X2>0]/X2[X2>0]) ) 
-
 #X2= c(0.3,0.7) 
 r2 = sum(P*log((1-gi_opt1)+R*gi_opt1*X2) ) 
 #This matches most closely to the non-bet-hedging example,
