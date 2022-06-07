@@ -16,17 +16,30 @@ Dkl2=sum(P*log(P/X2) )
 
 #Information section:
 pec = matrix( c(0.98,0.02,0.03,0.97),2,2) #Conditional probs of E                                                                                          
-xec=pec     #Conditional probs of pop
+xec=pec     #Conditional probs of phenotype
 #Make a joint distribution table so that both sets of marginals = P
 jec = matrix(c(0.294, 0.006, 0.021, 0.679),2,2) 
-rec = matrix(c(30,15), 2,2) #Reproduction as a table
 cc=matrix(colSums(jec),2,2, byrow=T)  #The cue as a matrix
 
 #Calculate this two different ways. From full equation: 
-s1 = (pec*log(xec*rec))  
-rho1 = sum(colSums(jec)*rowSums(s1) ) 
+rec = matrix(c(30,0,0,15), 2,2) #Reproduction as a table
+s1 = 0 
+for (c in 1:2){  
+	e1=0
+	for (e in 1:2) { 
+		p1 = 0 
+		for (p in 1:2) { 
+			p1 = p1 + xec[p,c]*rec[p,e]
+		}
+		e1 = e1+ pec[e,c]*log(p1)
+	}
+
+	s1 = s1+ colSums(jec)[c]*e1
+}
+rho1 = s1 
 
 #From fitness and info components. Note Dkl = 0 because xec = pec
+rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
 f1 = sum(rowSums(jec)*log(rec[,1]) )
 HEC = -sum(jec*(log(jec/cc))) #Conditional entropy
 HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy
@@ -43,7 +56,7 @@ source("./env_functions.R")
 P = c(0.3,0.7) #Environment
 X = c(0.5,0.5) #Uniform
 X2 = P #Proportionate
-R = c(30,1) #Reproduction
+R = c(30,0.1) #Reproduction
 
 gi = seq(0.01,1,0.01)
 si = 1
@@ -137,6 +150,24 @@ xec[!is.finite(xec)] = 0
 xec[1,2] = 1
 
 #Calculate the growth rate 
+#Calculate this two different ways. From full equation: 
+rec = matrix(c(30,0,0,15), 2,2) #Reproduction as a table
+s1 = 0 
+for (c in 1:2){  
+	e1=0
+	for (e in 1:2) { 
+		p1 = 0 
+		for (p in 1:2) { 
+			p1 = p1 +(  (1-gi_opt1)*si + gi_opt1* xec[p,c]*rec[p,e]    ) 
+		}
+		e1 = e1+ pec[e,c]*log(p1)
+	}
+
+	s1 = s1+ colSums(jec)[c]*e1
+}
+rho1 = s1 
+
+
 s1 = (pec*log((1-gi_opt1)*si + gi_opt1*xec*rec))  
 r3 = sum(colSums(jec)*rowSums(s1) ) 
 
@@ -154,8 +185,9 @@ y= (pec2[2,1]*bhec1[1,1]-pec2[1,1]*bhec1[2,1])/(pec2[1,2]*pec2[2,1]-pec2[1,1]*pe
 
 xy = matrix(c(x,y),2,2,byrow=T)
 bhec2 = t(pce*xy)
+bhec2 = bhec1/pec
 
-f3 = sum(rowSums(jec)*log(bhec1[1,]) )
+f3 = sum(rowSums(jec)*log(bhec1[,1]) )
 
 bhec2 = bhec1*cc/jec 
 f3 = sum(rowSums(jec)*log(rowSums(bhec2)) )
