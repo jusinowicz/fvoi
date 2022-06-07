@@ -151,7 +151,7 @@ xec[1,2] = 1
 
 #Calculate the growth rate 
 #Calculate this two different ways. From full equation: 
-rec = matrix(c(30,0,0,15), 2,2) #Reproduction as a table
+rec = matrix(c(30,0,0,0.1), 2,2) #Reproduction as a table
 s1 = 0 
 for (c in 1:2){  
 	e1=0
@@ -162,10 +162,21 @@ for (c in 1:2){
 		}
 		e1 = e1+ pec[e,c]*log(p1)
 	}
-
 	s1 = s1+ colSums(jec)[c]*e1
 }
-rho1 = s1 
+
+rho3 = s1 
+
+#From fitness and info components. Note Dkl = 0 because xec = pec
+bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec
+bhec2  = colSums(bhec1)
+rec2 = matrix(c(bhec2[1],bhec2[2]), 2,2) #Note the change in the definition of this term. 
+
+f4 = sum(rowSums(jec)*log(rec2[,1]) )
+HEC4 = -sum(jec*(log(jec/cc))) #Conditional entropy
+HCC4 = -sum(cc*pec*(log(xec))) #Conditional cross entropy
+rho4 = f1-HEC
+
 
 
 s1 = (pec*log((1-gi_opt1)*si + gi_opt1*xec*rec))  
