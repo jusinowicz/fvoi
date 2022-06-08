@@ -158,9 +158,11 @@ for (c in 1:2){
 	for (e in 1:2) { 
 		p1 = 0 
 		for (p in 1:2) { 
-			p1 = p1 +(  (1-gi_opt1)*si + gi_opt1* xec[p,c]*rec[p,e]    ) 
+			#p1 = p1 +(  (1-gi_opt1)*si + gi_opt1* xec[p,c]*rec[p,e]    )
+			p1 = p1+gi_opt1*xec[p,c]*rec[p,e]
+
 		}
-		e1 = e1+ pec[e,c]*log(p1)
+		e1 = e1+ pec[e,c]*log( (1-gi_opt1)*si + p1)
 	}
 	s1 = s1+ colSums(jec)[c]*e1
 }
