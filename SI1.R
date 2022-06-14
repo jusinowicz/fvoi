@@ -41,7 +41,7 @@ rho1 = s1
 #From fitness and info components. Note Dkl = 0 because xec = pec
 rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
 f1 = sum(rowSums(jec)*log(rec[,1]) )
-HEC = -sum(jec*(log(jec/cc))) #Conditional entropy
+HEC = -sum(jec*(log(pec))) #Conditional entropy, jec/cc
 HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy
 rho2 = f1-HEC
 
