@@ -16,7 +16,9 @@ Dkl2=sum(P*log(P/X2) )
 
 #Information section:
 pec = matrix( c(0.98,0.02,0.03,0.97),2,2) #Conditional probs of E                                                                                          
-xec=pec     #Conditional probs of phenotype
+xec=pec     #Conditional probs of phenotype: optimal
+xec = matrix(c(0.9,0.1,0.1,0.9),2,2) #To test sub-optimal strategy
+
 #Make a joint distribution table so that both sets of marginals = P
 jec = matrix(c(0.294, 0.006, 0.021, 0.679),2,2) 
 cc=matrix(colSums(jec),2,2, byrow=T)  #The cue as a matrix
@@ -24,12 +26,19 @@ cc=matrix(colSums(jec),2,2, byrow=T)  #The cue as a matrix
 #Calculate this two different ways. From full equation: 
 rec = matrix(c(30,0,0,15), 2,2) #Reproduction as a table
 s1 = 0 
+p1_k = matrix(0,8,1)
+ind1=1
 for (c in 1:2){  
 	e1=0
 	for (e in 1:2) { 
 		p1 = 0 
 		for (p in 1:2) { 
 			p1 = p1 + xec[p,c]*rec[p,e]
+			p1_k[ind1] = xec[p,c]*rec[p,e]
+			print(ind1)
+			print(p1_k[ind1])
+			ind1 = ind1+1
+
 		}
 		e1 = e1+ pec[e,c]*log(p1)
 	}
@@ -40,8 +49,9 @@ rho1 = s1
 
 #From fitness and info components. Note Dkl = 0 because xec = pec
 rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
+
 f1 = sum(rowSums(jec)*log(rec[,1]) )
-HEC = -sum(jec*(log(pec))) #Conditional entropy, jec/cc
+HEC = -sum(jec*(log(xec))) #Conditional entropy, jec/cc
 HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy
 rho2 = f1-HEC
 
@@ -152,6 +162,9 @@ xec[1,2] = 1
 #Calculate the growth rate 
 #Calculate this two different ways. From full equation: 
 rec = matrix(c(30,0,0,0.1), 2,2) #Reproduction as a table
+ne =2 #Number of environments
+p1_k2 = matrix(0,8,1)
+ind1= 1
 s1 = 0 
 for (c in 1:2){  
 	e1=0
@@ -159,10 +172,21 @@ for (c in 1:2){
 		p1 = 0 
 		for (p in 1:2) { 
 			#p1 = p1 +(  (1-gi_opt1)*si + gi_opt1* xec[p,c]*rec[p,e]    )
-			p1 = p1+gi_opt1*xec[p,c]*rec[p,e]
-
+			#p1 = p1+gi_opt1*xec[p,c]*rec[p,e]
+			p1 = p1+(1-gi_opt1)*si/ne +gi_opt1*xec[p,c]*rec[p,e]
+			p1_k2[ind1] = (1-gi_opt1)*si/ne +gi_opt1*xec[p,c]*rec[p,e]
+			ind1 = ind1+1
 		}
-		e1 = e1+ pec[e,c]*log( (1-gi_opt1)*si + p1)
+		#Quick note: move the additive constant into the sum via
+		#(1-gi_opt1)*si / e, then this maybe becomes d_r and the 
+		#y(e) are the bet hedging proportions ala pec[]?
+		#e1 = e1+ pec[e,c]*log( (1-gi_opt1)*si + p1)
+				print(paste("e ", e, "c ", c, "p1", p1))
+
+		p1= p1/pec[e,c]
+		print(paste("e ", e, "c ", c, "p1", p1))
+		e1 = e1+ pec[e,c]*log(pec[e,c]*p1)
+
 	}
 	s1 = s1+ colSums(jec)[c]*e1
 }
@@ -170,15 +194,25 @@ for (c in 1:2){
 rho3 = s1 
 
 #From fitness and info components. Note Dkl = 0 because xec = pec
-bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec
-bhec2  = colSums(bhec1)
+rec2 = matrix(c(30,0.1), 2,2) #Note the change in the definition of this term. 
+bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec2
+bhec2  = (bhec1/pec)
 rec2 = matrix(c(bhec2[1],bhec2[2]), 2,2) #Note the change in the definition of this term. 
 
-f4 = sum(rowSums(jec)*log(rec2[,1]) )
-HEC4 = -sum(jec*(log(jec/cc))) #Conditional entropy
+f4 = sum(rowSums(jec)*log(bhec2) )
+HEC4 = -sum(jec*(log(cc))) #Conditional entropy
 HCC4 = -sum(cc*pec*(log(xec))) #Conditional cross entropy
-rho4 = f1-HEC
+rho4 = f4-HEC4
 
+f4 = sum(rowSums(jec)*log(rec2[,1]) )
+HEC4 = -sum(jec*(log(pec))) #Conditional entropy, jec/cc
+
+#From fitness and info components. Note Dkl = 0 because xec = pec
+rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
+f1 = sum(rowSums(jec)*log(rec[,1]) )
+HEC = -sum(jec*(log(pec))) #Conditional entropy, jec/cc
+HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy
+rho2 = f1-HEC
 
 
 s1 = (pec*log((1-gi_opt1)*si + gi_opt1*xec*rec))  
