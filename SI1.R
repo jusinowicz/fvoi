@@ -26,25 +26,15 @@ cc=matrix(colSums(jec),2,2, byrow=T)  #The cue as a matrix
 #Calculate this two different ways. From full equation: 
 rec = matrix(c(30,0,0,15), 2,2) #Reproduction as a table
 s1 = 0 
-p1_k = matrix(0,8,1)
-ind1=1
+
 for (c in 1:2){  
 	e1=0
 	for (e in 1:2) { 
 		p1 = 0 
 		for (p in 1:2) { 
 			p1 = p1 + xec[p,c]*rec[p,e]
-			p1_k[ind1] = xec[p,c]*rec[p,e]
-			print(ind1)
-			print(p1_k[ind1])
-			ind1 = ind1+1
-
 		}
-
-		print(paste("e ", e, "c ", c, "p1", p1))
-		p1= p1/pec[e,c]
-		print(paste("e ", e, "c ", c, "p1", p1))
-		e1 = e1+ pec[e,c]*log(pec[e,c]*p1)
+		e1 = e1+ pec[e,c]*log(p1)
 	}
 
 	s1 = s1+ colSums(jec)[c]*e1
@@ -54,9 +44,13 @@ rho1 = s1
 #From fitness and info components. Note Dkl = 0 because xec = pec
 rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
 f1 = sum(rowSums(jec)*log(rec[,1]) )
-HEC = -sum(jec*(log(xec))) #Conditional entropy, jec/cc
-HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy
-rho2 = f1-HEC
+HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy. Breaks into: 
+HEC = -sum(jec*(log(jec/cc))) #Conditional entropy, jec/cc
+Dkl3=sum(jec*log(pec/xec) ) #Conditional divergence
+
+#Growth rate. Check that these are equal, and equal to rho1
+rho2a = f1-HEC-Dkl3
+rho2b = f1-HCC
 
 #Written out!
 cc[1,1]*pec[1,1]*log(xec[1,1]*30) + cc[2,1]*pec[2,1]*log(xec[2,1]*15)+
@@ -166,8 +160,6 @@ xec[1,2] = 1
 #Calculate this two different ways. From full equation: 
 rec = matrix(c(30,0,0,0.1), 2,2) #Reproduction as a table
 ne =2 #Number of environments
-p1_k2 = matrix(0,8,1)
-ind1= 1
 s1 = 0 
 for (c in 1:2){  
 	e1=0
@@ -175,20 +167,15 @@ for (c in 1:2){
 		p1 = 0 
 		for (p in 1:2) { 
 			#p1 = p1 +(  (1-gi_opt1)*si + gi_opt1* xec[p,c]*rec[p,e]    )
-			#p1 = p1+gi_opt1*xec[p,c]*rec[p,e]
 			p1 = p1+(1-gi_opt1)*si/ne +gi_opt1*xec[p,c]*rec[p,e]
-			p1_k2[ind1] = (1-gi_opt1)*si/ne +gi_opt1*xec[p,c]*rec[p,e]
-			ind1 = ind1+1
 		}
+
+		#e1 = e1+ pec[e,c]*log( (1-gi_opt1)*si + p1)
+		
 		#Quick note: move the additive constant into the sum via
 		#(1-gi_opt1)*si / e, then this maybe becomes d_r and the 
 		#y(e) are the bet hedging proportions ala pec[]?
-		#e1 = e1+ pec[e,c]*log( (1-gi_opt1)*si + p1)
-				print(paste("e ", e, "c ", c, "p1", p1))
-
-		p1= p1/pec[e,c]
-		print(paste("e ", e, "c ", c, "p1", p1))
-		e1 = e1+ pec[e,c]*log(pec[e,c]*p1)
+		e1 = e1+ pec[e,c]*log(p1)
 
 	}
 	s1 = s1+ colSums(jec)[c]*e1
@@ -200,79 +187,28 @@ rho3 = s1
 rec2 = matrix(c(30,0.1), 2,2) #Note the change in the definition of this term. 
 bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec2
 bhec2  = (bhec1/pec)
-rec2 = matrix(c(bhec2[1],bhec2[2]), 2,2) #Note the change in the definition of this term. 
 
-f4 = sum(rowSums(jec)*log(bhec2) )
-HEC4 = -sum(jec*(log(cc))) #Conditional entropy
-HCC4 = -sum(cc*pec*(log(xec))) #Conditional cross entropy
-rho4 = f4-HEC4
+f4 = sum(jec*log(bhec2) )
+HCC4 = -sum(cc*pec*(log(pec))) #Conditional cross entropy. Breaks into: 
+HEC4 = -sum(jec*(log(jec/cc))) #Conditional entropy, jec/cc
+Dkl4=sum(jec*log(pec/pec) ) #Conditional divergence
 
-f4 = sum(rowSums(jec)*log(rec2[,1]) )
-HEC4 = -sum(jec*(log(pec))) #Conditional entropy, jec/cc
-
-#From fitness and info components. Note Dkl = 0 because xec = pec
-rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
-f1 = sum(rowSums(jec)*log(rec[,1]) )
-HEC = -sum(jec*(log(pec))) #Conditional entropy, jec/cc
-HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy
-rho2 = f1-HEC
+#Growth rate. Check that these are equal, and equal to rho1
+rho4a = f4 - HCC4
+rho4b = f4 - HEC4-Dkl4
 
 
-s1 = (pec*log((1-gi_opt1)*si + gi_opt1*xec*rec))  
-r3 = sum(colSums(jec)*rowSums(s1) ) 
+#####Showing some work: 
+#No storage
+sum((jec)*(log(rec)+log(xec) ) )
+sum(jec*log(rec))+sum(jec*log(xec))
+sum(jec*log(rec))+sum(jec*log(xec)) + sum(jec*log(pec))-sum(jec*log(pec))
+sum(jec*log(rec))+sum(jec*log(pec)) - sum(jec*log(pec/xec))
 
-cc * rowSums(  (pec*log( (1-gi_opt1)*si + gi_opt1*xec*rec)  )    )
-pec2 = t(pec)
-pce = jec/(matrix( rowSums(jec),2,2 )) 
-bhec1 = (1-gi_opt1)*si + gi_opt1*xec*rec
-# x= -(d*f-b*g)/(b*c-a*d)
-# y= (c*f-a*g)/(b*c-a*d)
-x= -(pce[2,2]*bhec1[1,1]-pce[1,2]*bhec1[2,1])/(pce[1,2]*pce[2,1]-pce[1,1]*pce[2,2])
-y= (pce[2,1]*bhec1[1,1]-pce[1,1]*bhec1[2,1])/(pce[1,2]*pce[2,1]-pce[1,1]*pce[2,2])
-
-x= -(pec2[2,2]*bhec1[1,1]-pec2[1,2]*bhec1[2,1])/(pec2[1,2]*pec2[2,1]-pec2[1,1]*pec2[2,2])
-y= (pec2[2,1]*bhec1[1,1]-pec2[1,1]*bhec1[2,1])/(pec2[1,2]*pec2[2,1]-pec2[1,1]*pec2[2,2])
-
-xy = matrix(c(x,y),2,2,byrow=T)
-bhec2 = t(pce*xy)
-bhec2 = bhec1/pec
-
-f3 = sum(rowSums(jec)*log(bhec1[,1]) )
-
-bhec2 = bhec1*cc/jec 
-f3 = sum(rowSums(jec)*log(rowSums(bhec2)) )
-HEC3 = -sum(jec*(log(jec/cc))) #Conditional entropy
-rho3 = f3-HEC3
-
-esub3 = pec*log(bhec2)
-cesub3 = pec*log(pec)
-sum(esub3+cesub3)
-
-f1 = sum(rowSums(jec)*log(rec[,1]) )
-HEC = -sum(jec*(log(jec/cc))) #Conditional entropy
-HCC = -sum(cc*pec[xec>0]*(log(xec[xec>0]))) #Conditional cross entropy
-rho2 = f1-HEC
-
-esub3 = pec*log((1-gi_opt2)/xec+rec) 
-cesub3 = pec*log(xec)  
-esub3[!is.finite(esub3)] = 0 
-cesub3[!is.finite(cesub3)] = 0 
-sum(esub3+cesub3) 
-Dkl3=sum(pec[xec>0]*log(pec[xec>0]/xec[xec>0]) ) 
-
-pec*( log(xec*( (1-gi_opt2)/xec+rec))) 
-pec*( log(( (1-gi_opt2)+rec*xec))) 
-
-#From fitness and info components. Note Dkl = 0 because xec = pec
-f1 = sum(rowSums(jec)*log(rec[,1]) )
-HEC = -sum(jec*(log(jec/cc))) #Conditional entropy
-HCC = -sum(cc*pec[xec>0]*(log(xec[xec>0]))) #Conditional cross entropy
-rho2 = f1-HEC
-
-#Written out!
-cc[1,1]*pec[1,1]*log((1-gi_opt2)*si + gi_opt2*xec[1,1]*rec[1,1]) + cc[2,1]*pec[2,1]*log((1-gi_opt2)*si + gi_opt2*xec[2,1]*rec[2,1])+
-cc[1,2]*pec[1,2]*log((1-gi_opt2)*si + gi_opt2*xec[1,2]*rec[1,2]) + cc[2,2]*pec[2,2]*log((1-gi_opt2)*si + gi_opt2*xec[2,2]*rec[2,2])
-
+#With storage
+sum((jec)*(log(bhec2 )+log(pec ) ) )
+sum(jec*log(bhec2))+sum(jec*log(pec))
+sum(jec*log(bhec2))+sum(jec*log(pec))- sum(jec*log(pec/pec))
 
 
 #####Subfair and bet hedging with arbitrary number of 
