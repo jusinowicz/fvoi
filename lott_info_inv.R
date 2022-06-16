@@ -418,6 +418,9 @@ theme(axis.text.x=element_blank(), axis.title.x=element_blank()) #, legend.posit
 p0
 
 
+####Save stuff for figures
+save(file ="./data/fvoi_plot3.var",env_fit,lott_long)
+
 
 #=============================================================================
 #Some plots for optimal bet-hedging, Section 2: 
