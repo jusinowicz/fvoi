@@ -40,7 +40,11 @@ for (c in 1:2){
 			ind1 = ind1+1
 
 		}
-		e1 = e1+ pec[e,c]*log(p1)
+
+		print(paste("e ", e, "c ", c, "p1", p1))
+		p1= p1/pec[e,c]
+		print(paste("e ", e, "c ", c, "p1", p1))
+		e1 = e1+ pec[e,c]*log(pec[e,c]*p1)
 	}
 
 	s1 = s1+ colSums(jec)[c]*e1
@@ -49,7 +53,6 @@ rho1 = s1
 
 #From fitness and info components. Note Dkl = 0 because xec = pec
 rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
-
 f1 = sum(rowSums(jec)*log(rec[,1]) )
 HEC = -sum(jec*(log(xec))) #Conditional entropy, jec/cc
 HCC = -sum(cc*pec*(log(xec))) #Conditional cross entropy
