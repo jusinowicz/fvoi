@@ -86,6 +86,8 @@ points(gi,pg1,col="red")
 gi_opt1 = gi[which(pg1 == max(pg1)) ] 
 gi_opt2 = gi[which(pg2 == max(pg2)) ] 
 
+#This is a second way to find the optimal germination value (in the variable 
+# 1-gst$b0)using KKT. This also returns the optimal proportions of phenotypes. 
 gst = (get_single_opt_KKT( fr=as.matrix(R), ep=as.matrix(P), nspp=1, sr = 1)) #Optimal 
 #The percentages stored in gst$bi are out of the total, and must be converted to be 
 #out of the amount germinating to extend to the model: 
