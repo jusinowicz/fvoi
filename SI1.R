@@ -98,10 +98,12 @@ X2 = c(gst$bi/sum(gst$bi))
 
 a1 = (1-gi_opt1)+R*gi_opt1*X
 r1 = sum(P*log((1-gi_opt1)+R*gi_opt1*X) ) 
-esub1 = P*log((1-gi_opt1)/X+R*gi_opt1)       
-
+rh1 = a1/X
+# esub1 = P*log((1-gi_opt1)/X+R*gi_opt1)       
+# cesub = P*log(X)  
+esub1 = P*log(rh1)       
 cesub = P*log(X)  
-sum(esub1+cesub)
+rho1= sum(esub1+cesub)
 Dkl=sum(P*log(P/X) )
 
 #Optimal
@@ -123,7 +125,7 @@ bh1 = (1-gi_opt1)+R*gi_opt1*X2
 bh2 = bh1/P
 esub2 = P*log(bh2)
 cesub2 = P*log(P)
-sum(esub2+cesub2)
+rho2 = sum(esub2+cesub2)
 Dkl2=sum(P*log(P/P) ) 
 
 
