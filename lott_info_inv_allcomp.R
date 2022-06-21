@@ -47,7 +47,7 @@ source("./../fvoi/env_functions.R")
 ngens = 2000 #Time steps
 nspp = 2 #Species
 nsamp = 50
-gsu = 0.2 #Constant germination rate for model 
+gsu = 0.8 #Constant germination rate for model 
 gs_min = 0.01#For control over the germination rate, make this very small. 
 
 #=============================================================================
@@ -229,7 +229,7 @@ for(o in 1:nincs){
 		env_fit$sr = c(matrix(0.9,nspp,1)) #rnorm(nspp, 0.1, 0.1)
 
 		#Scale the intrinsic fitness: 
-		env_fit$lambda_r = c(10,10)
+		env_fit$lambda_r = c(30,30)
 		#Adding a small amount to remove the 0s makes analysis way easier.
 		env_fit$fr = env_fit$fr* env_fit$lambda_r+.01 
 
@@ -241,10 +241,18 @@ for(o in 1:nincs){
 		fs1 = hist(env_fit$fr[,1], breaks = b1 )
 		fs2 = hist(env_fit$fr[,2], breaks = b2 )
 		env_fit$fs = cbind( fs1$mids, fs2$mids)
+		
+		#v1 is the old way: 
+		# gst = get_single_opt_CT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
+		# gst$b0[gst$b0<=0] = gsu
+		# gst$b0[gst$b0>=gs_min] = gsu
+		# gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
+
+		#v2 use KKT and get it for the single-species version 
 		gst = get_single_opt_KKT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
-		gst$b0[gst$b0<=0] = gsu
-		gst$b0[gst$b0>=gs_min] = gsu
-		gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
+		gst$b0[(1-gst$b0)<=0] = 1-gsu
+		#gs_o =  matrix( c( matrix( gsu,1,2) ),ngens,nspp,byrow=T)
+		gs_o =  matrix( c( matrix( 1-gst$b0,1,2) ),ngens,nspp,byrow=T)
 
 		#####################################################
 		####For runif germination: 
@@ -430,6 +438,9 @@ points(env_fit$mr2_all[,1])
 
 plot(env_fit$mc2_all[,2],col="red", ylim=c(0,2) )                                                                  
 points(env_fit$mr2_all[,2])       
+
+
+save(file="./data/env_fit3v4.var",env_fit )
 
 #=============================================================================
 # Plot

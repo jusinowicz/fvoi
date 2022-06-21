@@ -94,7 +94,7 @@ env_fit$Ni = Ni #Simple population dynamics
 env_fit$Ni2 = Ni #Population dynamics of residents only! 
 env_fit$Ni3 = Ni #Dormancy model (no competition)
 env_fit$opt = c(0.4,0.6) #runif(nspp)
-env_fit$var = matrix( 0.1 ,nspp,1) #A generic variance
+env_fit$var = matrix( 0.3 ,nspp,1) #A generic variance
 env_fit$min_max = NULL
 env_fit$g_mean = NULL
 env_fit$g_var = NULL
@@ -149,7 +149,7 @@ env_fit$gr= get_env_cue(env_fit, method = env_fit$cue_method)
 env_fit$sr = c(matrix(0.9,nspp,1)) #rnorm(nspp, 0.1, 0.1)
 
 #Scale the intrinsic fitness: 
-env_fit$lambda_r = c(10,10)
+env_fit$lambda_r = c(50,50)
 #Adding a small amount to remove the 0s makes analysis way easier.
 env_fit$fr = env_fit$fr* env_fit$lambda_r+.01 
 
@@ -169,10 +169,18 @@ b2 = seq(min(env_fit$fr[,2]), max(env_fit$fr[,2] ), length = length(ep$breaks))
 fs1 = hist(env_fit$fr[,1], breaks = b1 )
 fs2 = hist(env_fit$fr[,2], breaks = b2 )
 env_fit$fs = cbind( fs1$mids, fs2$mids)
-gst = get_single_opt_CT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
-gst$b0[gst$b0<=0] = gsu
-gst$b0[gst$b0>=gs_min] = gsu
-gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
+
+#v1 is the old way: 
+# gst = get_single_opt_CT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
+# gst$b0[gst$b0<=0] = gsu
+# gst$b0[gst$b0>=gs_min] = gsu
+# gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
+
+#v2 use KKT and get it for the single-species version 
+gst = get_single_opt_KKT( fr=env_fit$fs, ep=env_fit$env_prob, nspp=nspp, sr = env_fit$sr ) #Optimal 
+gst$b0[gst$b0<=0] = 1-gsu
+#gs_o =  matrix( c( matrix( gsu,1,2) ),ngens,nspp,byrow=T)
+gs_o =  matrix( c( matrix( 1-gst$b0,1,2) ),ngens,nspp,byrow=T)
 
 
 #Annual intrinsic fitness

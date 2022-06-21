@@ -129,8 +129,8 @@ env_states = env_states/sum(env_states)
 
 ###
 #For the SI example: 
-num_states = 2
-env_states = c(0.3,0.7)
+# num_states = 2
+# env_states = c(0.3,0.7)
 
 env = sample(x=(0:(num_states-1)), size=ngens, prob = env_states, replace=T)
 #env = make_simple_env(env_states,ngens)
@@ -213,9 +213,9 @@ for (t in 1:tsize){
 }
 
 gst = get_single_opt_KKT( fr=fs, ep=env_prob, nspp=nspp, sr = sr ) #Optimal 
-gst$b0[gst$b0<=0] = gsu
-gs_o =  matrix( c( matrix( gsu,1,2) ),ngens,nspp,byrow=T)
-#gs_o =  matrix( c( matrix( gst$b0,1,2) ),ngens,nspp,byrow=T)
+gst$b0[gst$b0<=0] = 1-gsu
+#gs_o =  matrix( c( matrix( gsu,1,2) ),ngens,nspp,byrow=T)
+gs_o =  matrix( c( matrix( 1-gst$b0,1,2) ),ngens,nspp,byrow=T)
 #qs_o =  matrix( c(get_single_opt( fr=fr_opt, nspp=nspp, sr = sr )$opts),num_states,nspp,byrow=T) #Optimal 
 #qs_io = matrix(c(get_multi_opt(fr=fr_opt, gs=gs nspp=nspp, sr = sr ) ),num_states,nspp,byrow=T )
 
@@ -377,6 +377,11 @@ lines(log(Ni2[,1]),col="orange")
 lines(log(Ni3[,1]),col="green")
 lines(log(Ni4[,1]),col="yellow")
 
+
+
+
+
+#######THESE NEED TO BE UPDATED TO MATCH THE NEW MODEL#########################
 #Theoretical prediction based on optimal germination/betting strategy (gs)
 lines(log(2^(nn*sum(env_prob*log2(qs[,1]*fs[,1])))),col="red",lty=4)
 #Theoretical prediction when optimal germination matches actual probs
@@ -531,5 +536,9 @@ rnoi_I = gp1-sE-klr
 ri_I = gp1 - sCgivenE - kl_egc
 
 ####Save stuff for figures
-save(file ="dm_simp.var",Ni, No, N_noi, rho_noi, rho_o, rho_i, gs_o, gj, gce, gec, 
-		 sE, sCgivenE, mI, mI_sim,env_act,env_sensed)
+Ni = Ni3
+rho_i = rho_i3
+save(file ="dm_simp2.var",Ni, No, N_noi, rho_noi, rho_o, rho_i,mI)
+
+# save(file ="dm_simp.var",Ni, No, N_noi, rho_noi, rho_o, rho_i, gs_o, gj, gce, gec, 
+# 		 sE, sCgivenE, mI, mI_sim,env_act,env_sensed)

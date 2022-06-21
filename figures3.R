@@ -478,10 +478,10 @@ ggsave(file="figure1_MIb.pdf",g3b)
 #=============================================================================
 # Figure 2
 #=============================================================================
-load("./data/ni_simple.var") #Figure 2
+load("./data/ni_simple2.var") #Figure 2
 
-ngens = dim(Ni)[1]
-ni = data.frame(1:ngens, Ni[,1], Ni_i[,1])
+ngens = dim(Ni_noi)[1]
+ni = data.frame(1:ngens, Ni_noi[,1], Ni_i[,1])
 names(ni) = c("Time","ni1","ni_i1")
 nil = ni%>%gather(ni, pop, ni1:ni_i1) #%>% gather(ni_i, pop_i, ni_i1:ni_i2)
 c_use = c("#440154FF","#440154FF","#440154FF","#440154FF" )
@@ -489,7 +489,7 @@ ni2 = nil[nil$Time < 100,]
 
 #For text plotting
 xpos2 = c(matrix(c(55, 60), 2,1))
-ypos2 = c(ni2$pop[ni2$Time == 40],ni2$pop[ni2$Time == 50])
+ypos2 = c(ni2$pop[ni2$Time == 40]*200,ni2$pop[ni2$Time == 50])
 ypos2= ypos2[c(1,4)]
 suse2 = c("\u03C1(E~U)", "\u03C1(E|C)")
 #suse2 = c("A","B")
@@ -510,9 +510,9 @@ p1 = ggplot() + geom_line(data=ni2,aes(x=Time, y=pop,color =ni,linetype = ni ))+
 p1
 
 
-mlogr = mean(log(rhoi2))
+mlogr = mean(log(rho_noi))
 mlogr_i = mean(log(rhoi_i))
-mI_sim
+mI_sim =  mlogr_i -mlogr
 mI
 
 # infos = data.frame( rho = mlogr, rho_i = mlogr_i, MI_sim = mI_sim, MI =mI, DKL = mI_sim - mI )
@@ -533,6 +533,7 @@ mI
 # p1a
 
 ##A stacked version, where the MI, D, and delta rho are stacked
+#infos = data.frame( rho = mlogr, rho_i = mlogr_i, MI_sim = mI_sim, DKL = 0 )
 infos = data.frame( rho = mlogr, rho_i = mlogr_i, MI_sim = mI_sim, DKL = 0 )
 infos = infos %>% gather( name, infos, rho:DKL )
 infos$type1 = c("r1","r1","it1","it2")
@@ -555,7 +556,7 @@ p1a = ggplot()  + geom_bar(data=infos, aes(x = type2, y = infos,fill = type1),po
 		) + scale_fill_grey(start = 0, end = .9)
 p1a
 
-load("./data/dm_simp.var")
+load("./data/dm_simp2.var")
 ngens = dim(Ni)[1]
 ni = data.frame(1:ngens, Ni[,1], No[,1])
 names(ni) = c("Time","ni1","no1")
@@ -575,7 +576,7 @@ p2 = ggplot() + geom_line(data=ni2,aes(x=Time, y=pop,color =ni,linetype = ni ))+
 	scale_color_manual(values=c_use)+
 	 #scale_colour_viridis_d()+ 
 	ylab("")+ xlab("")+
-	geom_text( aes(x = xpos3, y = ypos3, label = suse3,color=suse2)) +
+	geom_text( aes(x = xpos3, y = ypos3, label = suse3,color=suse3)) +
  	scale_y_log10()+
 	theme_bw() + theme(
 	text = element_text(size=14),
@@ -609,7 +610,7 @@ mI2 = mI
 # p2a
 
 ##A stacked version, where the MI, D, and delta rho are stacked
-infos2 = data.frame( rho = mlogr2, rho_i = mlogr_i2, MI_sim = mI_sim2, DKL = mI2-mI_sim2  )
+infos2 = data.frame( rho = mlogr2, rho_i = mlogr_i2, MI_sim = mI_sim2, DKL = abs(mI2-mI_sim2)  )
 infos2 = infos2 %>% gather( name, infos, rho:DKL )
 infos2$type1 = c("r1","r1","it1","it2")
 infos2$type2 = c("rho1","rho2","infos","infos")
@@ -763,10 +764,14 @@ ggsave(file="figure3.pdf", g)
 #=============================================================================
 # Figure 4
 #=============================================================================
-load("./data/env_fit2.var") 
+#load("./data/env_fit2.var") 
+load("./data/env_fit3v4.var") 
+
 
 ngens = dim(env_fit$mc2_all)[1]
+nspp =  dim(env_fit$mc2_all)[3]
 rhos = NULL
+
 for (s in 1:nspp){ 
 
 	#Convert these to data frames
@@ -841,7 +846,7 @@ p0
 #For text plotting
 xpos3 = c(matrix(c(0.25, 0.35), 2,1))
 ypos3 = c( max(r1$val2[r1$Competition == niches[23]]) ,min(r1$val1[r1$Competition == niches[18]]))
-ypos3 = ypos3 - c(0.1, -0.2)
+ypos3 = ypos3 - c(0.05, -0.4)
 suse3 = c( "No information","Information")
 #suse2 = c("A","B")
 

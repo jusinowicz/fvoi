@@ -116,8 +116,8 @@ for (s in 1:nspp) { fs[,s] = get_species_fit(probs=env_prob, fcor = fs_cor, fm=f
 	method=fm_method )}
 hist(fs) #Show fitness distribution 
 
-mstates=floor(num_states/2)
-fs = get_species_fit_pois(mstates, num_states, nspp,fm )
+# mstates=floor(num_states/2)
+# fs = get_species_fit_pois(mstates, num_states, nspp,fm )
 
 
 ####Conditional germination fraction i.e. germination with information
@@ -331,5 +331,7 @@ ri_I = gp1 - sCgivenE - kl_egc
 
 
 ####Save stuff for figures
-save(file = "ni_simple.var", Ni, Ni2, Ni_i, rhoi_i, rhoi2, sE, sCgivenE, mI, 
-		mI_sim,env_act,env_sensed)
+save(file = "ni_simple2.var", Ni_noi, Ni2, Ni_i, rho_noi, rhoi_i, rhoi2, mI)
+
+# save(file = "ni_simple.var", Ni, Ni2, Ni_i, rhoi_i, rhoi2, sE, sCgivenE, mI, 
+# 		mI_sim,env_act,env_sensed)
