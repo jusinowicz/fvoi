@@ -94,7 +94,7 @@ gs_cor = 0.99999
 #2. With gf_method = constant and fm_method = variable: this matches the dormancy
 #	model.
 
-####Germination fraction
+####Phenotype fraction
 gc = matrix(0.5,nspp,1) #For a constant germination fraction -- matches dormancy model
 gs = matrix(0,num_states,nspp)
 gf_method = "variable"
@@ -120,7 +120,7 @@ hist(fs) #Show fitness distribution
 # fs = get_species_fit_pois(mstates, num_states, nspp,fm )
 
 
-####Conditional germination fraction i.e. germination with information
+####Conditional phenotype fraction i.e. phenotype matching with information
 #This function creates a table of conditional probabilities based on the
 #G(E|C)
 gec = get_cp(env_states, acc=c(1,1) )
@@ -171,7 +171,6 @@ for (t in 1:ngens){
 	sp_fit_i = matrix((0:(num_states-1)),num_states,nspp)
 	for( s in 1:nspp){ 
 		env_sensed[t,s] = sample(x=(0:(num_states-1)), size=1, prob =gce[ (env_act[t]+1),,s], replace=T)
-		env_sensed[t,s] = 
 		ec = env_sensed[t,s]
 		sp_fit_i[,s][sp_fit_i[,s]!=ec] = -1 #Identify losers
 		sp_fit_i[,s][sp_fit_i[,s]==ec] = fs[,s][sp_fit_i[,s]==ec] #Set winning state to its payout
