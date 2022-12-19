@@ -24,7 +24,9 @@ This is the code used to produce the data in Figure 4.
 
 5. The code in "cc_fvoi.R" is the Lotka-Volterra model of competition from Gil et al. 2018. It includes some code to double check that the analytical solution to the FVOI for this model works. 
 
-This is the code used to produce Figure 5. 
+This is the code used to produce Figure 5.
+
+6. The code in “SI1.R” corresponds to “worked through” examples of the multiplcative growth model (see 1) and the dormancy model (see 2) that were added as Supplementary Information to the main text. In conjunction with SI1 itself, this code is the most straightforward to understand and work through. The file “SI_functions.R” was created to remove some of the bulkier chunks of repetitive code from SI1.R itself.  
 
 Figures: 
 The code in "figures.R" is used to make all of the figures in the manuscript. It loads stored data files, all of which are save with a ".var" ending. This is the map between files and figures: 
