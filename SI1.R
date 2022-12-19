@@ -1,3 +1,15 @@
+#=============================================================================
+# This is code for the Supplemental Information for Usinowicz and O'Connor.
+# It is meant to illustrate a simple multiplicative model of populating 
+# growth with and without storage (i.e. seed dormancy), and with and without
+# informaiton (i.e. conditional reproduction strategies). Each model section 
+# includes simluations and the details of the numerical calculations done 
+# in the SI. 
+#=============================================================================
+#
+# load this file which includes code to run the simulations
+source("./SI_functions.R")
+
 P = c(0.3,0.7) #Environment
 X = c(0.5,0.5) #Uniform
 X2 = P #Proportionate
@@ -6,13 +18,21 @@ R = c(30, 15) #Reproduction
 #Uniform 
 e1 = P*log(R)       
 ce = P*log(X)  
-sum(e1+ce)
+rho1 = sum(e1+ce)
+
+#Run simulations to compare results:
+r_sim1 = sim_mult (P  =  P, X = X, R = R )
+rho_sim1 = mean(r_sim1)
 
 #Proportionate 
 ce2 = P*log(X2) 
-sum(e1+ce2) 
+rho2=sum(e1+ce2) 
 Dkl=sum(P*log(P/X) ) 
 Dkl2=sum(P*log(P/X2) ) 
+
+#Run simulations to compare results: 
+r_sim2 = sim_mult (P  =  P, X = X2, R = R )
+rho_sim2 = mean(r_sim2)
 
 #Information section:
 pec = matrix( c(0.98,0.02,0.03,0.97),2,2) #Conditional probs of E                                                                                          
@@ -39,7 +59,7 @@ for (c in 1:2){
 
 	s1 = s1+ colSums(jec)[c]*e1
 }
-rho1 = s1 
+rho3 = s1 
 
 #From fitness and info components. Note Dkl = 0 because xec = pec
 rec = matrix(c(30,15), 2,2) #Note the change in the definition of this term. 
@@ -49,12 +69,17 @@ HEC = -sum(jec*(log(jec/cc))) #Conditional entropy, jec/cc
 Dkl3=sum(jec*log(pec/xec) ) #Conditional divergence
 
 #Growth rate. Check that these are equal, and equal to rho1
-rho2a = f1-HEC-Dkl3
-rho2b = f1-HCC
+rho3a = f1-HEC-Dkl3
+rho3b = f1-HCC
 
 #Written out!
 cc[1,1]*pec[1,1]*log(xec[1,1]*30) + cc[2,1]*pec[2,1]*log(xec[2,1]*15)+
 cc[1,2]*pec[1,2]*log(xec[1,2]*30) + cc[2,2]*pec[2,2]*log(xec[2,2]*15)
+
+#Run simulations to compare results: 
+r_sim3 = sim_mult_info (P  =  pec, X = xec, R = rec, J = jec)
+rho_sim3 = mean(r_sim3)
+
 
 #################################
 #####Subfair and bet hedging
@@ -108,6 +133,10 @@ cesub = P*log(X)
 rho1= sum(esub1+cesub)
 Dkl=sum(P*log(P/X) )
 
+#Run simulations to compare results: 
+r_sim1 = sim_stor(P  =  P, X = X, R = R, si=si, gi = gi_opt1 )
+rho_sim1 = mean(r_sim1)
+
 #Optimal
 #X2= c(0.3,0.7) 
 r2 = sum(P*log((1-gi_opt1)+R*gi_opt1*X2) ) 
@@ -130,6 +159,9 @@ cesub2 = P*log(P)
 rho2 = sum(esub2+cesub2)
 Dkl2=sum(P*log(P/P) ) 
 
+#Run simulations to compare results: 
+r_sim2 = sim_stor(P  =  P, X = X2, R = R, si=si, gi = gi_opt1 )
+rho_sim2 = mean(r_sim2)
 
 #Laplace or additive smooth?
 # al1=0.1
@@ -198,10 +230,17 @@ HEC4 = -sum(jec*(log(jec/cc))) #Conditional entropy, jec/cc
 Dkl4=sum(jec*log(pec/pec) ) #Conditional divergence
 
 #Growth rate. Check that these are equal, and equal to rho1
-rho4a = f4 - HCC4
-rho4b = f4 - HEC4-Dkl4
+rho3a = f4 - HCC4
+rho3b = f4 - HEC4-Dkl4
+
+#Run simulations to compare results: 
+r_sim3 = sim_stor_info (P  =  pec, X = xec, R = rec, J = jec,si=si, gi = gi_opt1 )
+rho_sim3 = mean(r_sim3)
 
 
+#=============================================================================
+# Notes and miscellaneous work that is not fully implemented
+#=============================================================================
 #####Showing some work: 
 #No storage
 sum((jec)*(log(rec)+log(xec) ) )
